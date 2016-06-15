@@ -1,0 +1,256 @@
+
+b delete
+b delete_one_child
+b delete_case1
+b delete_case2
+b delete_case3  
+b delete_case4
+b delete_case5
+b delete_case6
+*****************************************************************************************************
+
+Case-1 : UT Success
+( 2 child : convert to 0 / 1 child)
+
+n=8
+10, 5, 30, -5, 
+7, 20, 38, 35 
+
+Preorder sequence:
+ 10:color(1)  5:color(1)  -5:color(0)  7:color(0)  30:color(0)  20:color(1)  38:color(1)  35:color(0) 
+
+Inorder sequence:
+ -5:color(0)  5:color(1)  7:color(0)  10:color(1)  20:color(1)  30:color(0)  35:color(0)  38:color(1) 
+
+++++++++++++++++
+After delete(30)
+++++++++++++++++
+
+Preorder sequence:
+ 10:color(1)  5:color(1)  -5:color(0)  7:color(0)  35:color(0)  20:color(1)  38:color(1) 
+
+Inorder sequence:
+ -5:color(0)  5:color(1)  7:color(0)  10:color(1)  20:color(1)  35:color(0)  38:color(1) 
+*****************************************************************************************************
+
+
+
+Case-2	: UT Success
+(Black node with single RED child)
+
+n=10
+10, 5, 30, -5, 7, 
+20, 38, 32, 41, 35
+
+
+Preorder sequence:
+ 30:color(1)  10:color(0)  5:color(1)  -5:color(0)  7:color(0)  20:color(1)  38:color(0)  32:color(1)  35:color(0)  41:color(1) 
+
+Inorder sequence:
+ -5:color(0)  5:color(1)  7:color(0)  10:color(0)  20:color(1)  30:color(1)  32:color(1)  35:color(0)  38:color(0)  41:color(1)
+
+++++++++++++++++
+After delete(30)
+++++++++++++++++
+
+Preorder sequence:
+ 32:color(1)  10:color(0)  5:color(1)  -5:color(0)  7:color(0)  20:color(1)  38:color(0)  35:color(1)  41:color(1) 
+
+Inorder sequence:
+ -5:color(0)  5:color(1)  7:color(0)  10:color(0)  20:color(1)  32:color(1)  35:color(1)  38:color(0)  41:color(1) 
+*******************************************************************************************************************************************
+
+
+
+1 - S
+2 - S, S	
+3 - S
+4 - S
+5 - S
+6 - S
+
+
+
+Double Black Case-4 (Simple) : UT Success
+
+Solution: Just change the color parent & sibling
+
+n = 6
+12, 11, 14, 
+13, 20, 17
+
+Preorder sequence:
+ 12:color(1)  11:color(1)  14:color(0)  13:color(1)  20:color(1)  17:color(0) 
+
+Inorder sequence:
+ 11:color(1)  12:color(1)  13:color(1)  14:color(0)  17:color(0)  20:color(1) 
+
+++++++++++++++++
+After delete(17)
+++++++++++++++++
+Preorder sequence:
+ 12:color(1)  11:color(1)  14:color(0)  13:color(1)  20:color(1) 
+Inorder sequence:
+ 11:color(1)  12:color(1)  13:color(1)  14:color(0)  20:color(1) 
+
+++++++++++++++++
+After delete(13)
+++++++++++++++++
+Preorder sequence:
+ 12:color(1)  11:color(1)  14:color(1)  20:color(0) 
+
+Inorder sequence:
+ 11:color(1)  12:color(1)  14:color(1)  20:color(0) 
+*******************************************************************************************************************************************
+
+
+	
+Double Black Case-6 : UT Success
+
+n=5
+10, -10, 30, 25, 40
+
+Preorder sequence:
+ 10:color(1)  -10:color(1)  30:color(1)  25:color(0)  40:color(0) 
+Inorder sequence:
+ -10:color(1)  10:color(1)  25:color(0)  30:color(1)  40:color(0) 
+
+++++++++++++++++
+After delete(-10)
+++++++++++++++++
+
+Preorder sequence:
+ 30:color(1)  10:color(1)  25:color(0)  40:color(1) 
+Inorder sequence:
+ 10:color(1)  25:color(0)  30:color(1)  40:color(1)
+
+
+*******************************************************************************************************************************************
+
+
+
+Double Black Case-3 : UT Success
+
+n=3
+10, -10, 30
+
+++++++++++++++++
+After add(50)
+++++++++++++++++
+++++++++++++++++
+After delete(50)
+++++++++++++++++
+
+Preorder sequence:
+ 10:color(1)  -10:color(1)  30:color(1) 
+Inorder sequence:
+ -10:color(1)  10:color(1)  30:color(1)
+
+++++++++++++++++
+After delete(-10)
+++++++++++++++++
+Preorder sequence:
+ 10:color(1)  30:color(0) 
+
+Inorder sequence:
+ 10:color(1)  30:color(0)
+
+*******************************************************************************************************************************************
+
+
+Double Black Case-5 : UT Success
+
+Case-3 calls Case-5()
+
+n=9
+10, -30, 50,
+-40, -20, 30, 
+70, 15, 40 
+
+
+add(-10)
+add(16)
+
+delete(-10)
+delete(16)
+
+Preorder sequence:
+ 10:color(1)  -30:color(1)  -40:color(1)  -20:color(1)  50:color(1)  30:color(0)  15:color(1)  40:color(1)  70:color(1) 
+Inorder sequence:
+ -40:color(1)  -30:color(1)  -20:color(1)  10:color(1)  15:color(1)  30:color(0)  40:color(1)  50:color(1)  70:color(1) 
+
+
+++++++++++++++++
+After delete(-40)
+++++++++++++++++
+
+Preorder sequence:
+ 30:color(1)  10:color(1)  -30:color(1)  -20:color(0)  15:color(1)  50:color(1)  40:color(1)  70:color(1) 
+
+Inorder sequence:
+ -30:color(1)  -20:color(0)  10:color(1)  15:color(1)  30:color(1)  40:color(1)  50:color(1)  70:color(1) 
+*******************************************************************************************************************************************
+
+
+
+
+Double Black Case-2 : UT Passed for 2 variations
+
+There are two cases
+case-A
+delete(20)
+
+Preorder sequence:
+ 10:color(1)  -10:color(1)  -20:color(1)  -5:color(1)  60:color(1)  40:color(1)  50:color(0)  80:color(1) 
+Inorder sequence:
+ -20:color(1)  -10:color(1)  -5:color(1)  10:color(1)  40:color(1)  50:color(0)  60:color(1)  80:color(1)
+###########################################################################################################
+case-B root
+delete(10) 
+Preorder sequence:
+ 20:color(1)  -10:color(1)  -20:color(1)  -5:color(1)  60:color(1)  40:color(1)  50:color(0)  80:color(1) 
+
+Inorder sequence:
+ -20:color(1)  -10:color(1)  -5:color(1)  20:color(1)  40:color(1)  50:color(0)  60:color(1)  80:color(1) 
+###########################################################################################################
+
+Case-2()
+ -> calls Case-4()
+
+
+n=9
+10, -10, 40 
+-20, -5, 20
+60, 50, 80
+
+Preorder sequence:
+ 10:color(1)  -10:color(1)  -20:color(0)  -5:color(0)  40:color(0)  20:color(1)  60:color(1)  50:color(0)  80:color(0) 
+Inorder sequence:
+ -20:color(0)  -10:color(1)  -5:color(0)  10:color(1)  20:color(1)  40:color(0)  50:color(0)  60:color(1)  80:color(0)
+
+add(-6)
+add(81)
+
+delete(-6)
+delete(81)
+
+Preorder sequence:
+ 10:color(1)  -10:color(1)  -20:color(1)  -5:color(1)  40:color(1)  20:color(1)  60:color(0)  50:color(1)  80:color(1) 
+Inorder sequence:
+ -20:color(1)  -10:color(1)  -5:color(1)  10:color(1)  20:color(1)  40:color(1)  50:color(1)  60:color(0)  80:color(1)
+
+
+
+++++++++++++++++
+After delete(10)
+++++++++++++++++
+
+Preorder sequence:
+ 20:color(1)  -10:color(1)  -20:color(1)  -5:color(1)  60:color(1)  40:color(1)  50:color(0)  80:color(1) 
+
+Inorder sequence:
+ -20:color(1)  -10:color(1)  -5:color(1)  20:color(1)  40:color(1)  50:color(0)  60:color(1)  80:color(1) 
+
+
+*******************************************************************************************************************************************
+

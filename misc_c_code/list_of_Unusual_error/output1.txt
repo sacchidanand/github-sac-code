@@ -1,0 +1,33 @@
+sachin@sachin-laptop:~/Desktop/practice/c$ ./a.out 
+
+
+str3 [0]: f
+*** stack smashing detected ***: ./a.out terminated
+======= Backtrace: =========
+/lib/tls/i686/cmov/libc.so.6(__fortify_fail+0x50)[0x77e390]
+/lib/tls/i686/cmov/libc.so.6(+0xe233a)[0x77e33a]
+./a.out[0x80484d4]
+/lib/tls/i686/cmov/libc.so.6(__libc_start_main+0xe6)[0x6b2bd6]
+./a.out[0x80483e1]
+======= Memory map: ========
+00516000-00517000 r-xp 00000000 00:00 0          [vdso]
+00541000-0055e000 r-xp 00000000 08:05 2097325    /lib/libgcc_s.so.1
+0055e000-0055f000 r--p 0001c000 08:05 2097325    /lib/libgcc_s.so.1
+0055f000-00560000 rw-p 0001d000 08:05 2097325    /lib/libgcc_s.so.1
+0069c000-007ef000 r-xp 00000000 08:05 2097291    /lib/tls/i686/cmov/libc-2.11.1.so
+007ef000-007f0000 ---p 00153000 08:05 2097291    /lib/tls/i686/cmov/libc-2.11.1.so
+007f0000-007f2000 r--p 00153000 08:05 2097291    /lib/tls/i686/cmov/libc-2.11.1.so
+007f2000-007f3000 rw-p 00155000 08:05 2097291    /lib/tls/i686/cmov/libc-2.11.1.so
+007f3000-007f6000 rw-p 00000000 00:00 0 
+00ecf000-00eea000 r-xp 00000000 08:05 2101268    /lib/ld-2.11.1.so
+00eea000-00eeb000 r--p 0001a000 08:05 2101268    /lib/ld-2.11.1.so
+00eeb000-00eec000 rw-p 0001b000 08:05 2101268    /lib/ld-2.11.1.so
+08048000-08049000 r-xp 00000000 08:05 1310736    /home/sachin/Desktop/placement/practice/c/a.out
+08049000-0804a000 r--p 00000000 08:05 1310736    /home/sachin/Desktop/placement/practice/c/a.out
+0804a000-0804b000 rw-p 00001000 08:05 1310736    /home/sachin/Desktop/placement/practice/c/a.out
+089d1000-089f2000 rw-p 00000000 00:00 0          [heap]
+b774c000-b774d000 rw-p 00000000 00:00 0 
+b7760000-b7763000 rw-p 00000000 00:00 0 
+bfdcd000-bfde2000 rw-p 00000000 00:00 0          [stack]
+Aborted
+

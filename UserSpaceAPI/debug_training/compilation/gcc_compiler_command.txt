@@ -1,0 +1,51 @@
+
+1. Pre-process only 
+    -E :  Preprocess only; do not compile, assemble or link
+          expand all header files & macros
+
+  $ gcc -E sac-server_basic.c -o server.i
+-----------------------------------------------------------------------------
+
+2. Compile only
+    -S :  Compile only; do not assemble or link
+          assembly code generated like 8085 opcode, operand (Mnemonics)
+
+  $ gcc -S sac-server_basic.c -o server.s
+------------------------------------------------------------------------------
+
+3. Assember
+    -c :  Compile and assemble, but do not link
+          generate machine's code
+          At this phase, only existing code is converted into machine language,
+
+  $ gcc -c sac-server_basic.c -o server.o 
+------------------------------------------------------------------------------
+4. Linker
+        : static / dynamic
+          create an EXE file
+          it adds some extra code to our program which is required when the program starts and ends. 
+          For example, there is a code which is required for setting up the environment 
+          like passing command line arguments. 
+          This task can be easily verified by using $size filename.o and $size filename. 
+    
+  $ gcc sac-server_basic.c -o server.exe
+------------------------------------------------------------------------------
+
+e.g.
+
+$ gcc sac-server_basic.c -o server.exe
+
+$ size server.o
+text    data     bss     dec     hex filename
+706       0       0     706     2c2 server.o
+$ size server.exe
+text    data     bss     dec     hex filename
+2213     308       8    2529     9e1 server.exe
+
+$ file server.o
+server.o: ELF 32-bit LSB relocatable, Intel 80386, version 1 (SYSV), not stripped
+$ file server.exe
+server.exe: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.15, not stripped
+
+------------------------------------------------------------------------------
+-o <file> Place the output into <file>

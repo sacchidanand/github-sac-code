@@ -1,6 +1,25 @@
 #include<signal.h>
 #include<stdio.h>
 
+/*  Term   Default action is to terminate the process.
+ *  Ign    ignore the signal.
+ *  Core   terminate the process and dump core (see core(5)).
+ *  Stop   stop the process.
+ *  Cont   continue the process if it is currently stopped.
+ *
+ *  The signals SIGKILL and SIGSTOP cannot be caught, blocked, or ignored.
+ *  Dont stop the K--S :)
+ *
+ *  kill-9/-SIGKILL pid 
+ *  SIGKILL 9 Term Kill signal
+ *  SIGTERM 15 Term Termination signal
+ *
+ *
+ *   
+ * */
+
+
+
 static char buffer[5];
 void myctrlc(int sno);
 void myterm(int sno);

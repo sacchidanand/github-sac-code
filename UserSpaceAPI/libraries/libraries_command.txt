@@ -1,0 +1,22 @@
+Static libraries
+• special “archive files”
+• have extension ’.a’
+• created from object files using GNU archiver ‘ar’
+• used by linker to resolve references to functions at compile
+time
+
+Shared libraries
+• have extension ’.so’
+• preferred over static libraries
+
+.................................
+
+Static
+
+//create & replace
+ar cr libhello.a hello.o
+
+//table of contents
+ar t libhello.c
+
+

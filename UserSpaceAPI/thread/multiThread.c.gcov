@@ -1,0 +1,100 @@
+        -:    0:Source:multiThread.c
+        -:    0:Graph:multiThread.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:#define _GNU_SOURCE
+        -:    2:#include<unistd.h>
+        -:    3:#include<stdio.h>
+        -:    4:#include<stdlib.h>
+        -:    5:#include<string.h>
+        -:    6:#include<pthread.h>
+        -:    7:#define SLEEPTIME_SMALL 5
+        -:    8:#define SLEEPTIME_BIG 10
+        -:    9:
+        -:   10:pthread_t threads[4];
+        -:   11:void thread_start(pthread_t *thread);
+        -:   12:void thread_run(pthread_t *thread);
+        -:   13:static int start=0, end=0;
+        -:   14:
+    #####:   15:void displayThreadId(pthread_t tid){
+    #####:   16:  if(pthread_equal(tid, threads[0]))
+    #####:   17:    printf("\n\n1st Thread running");
+    #####:   18:  else if(pthread_equal(tid, threads[1]))
+    #####:   19:    printf("\n\n2nd Thread running");
+    #####:   20:  else if(pthread_equal(tid, threads[2]))
+    #####:   21:    printf("\n\n3rd Thread running");
+    #####:   22:  else if(pthread_equal(tid, threads[3]))
+    #####:   23:    printf("\n\n4th Thread running");
+    #####:   24:}
+        -:   25:
+    #####:   26:void* startRoutine(void *data) {
+    #####:   27:      int state=0;
+        -:   28:
+    #####:   29:      pthread_t tid = pthread_self();
+    #####:   30:      displayThreadId(tid);
+        -:   31:
+    #####:   32:      printf("\n Running startRoutine()...: %d ************", start++); 
+        -:   33:      //sleep(SLEEPTIME_SMALL);
+        -:   34:
+        -:   35:      pthread_attr_t myattr;
+    #####:   36:      pthread_getattr_np(pthread_self(), &myattr);
+    #####:   37:      pthread_attr_getdetachstate(&myattr, &state);
+        -:   38:      
+    #####:   39:      if(state == PTHREAD_CREATE_JOINABLE) {
+    #####:   40:        printf("\n Joinable thread ! state=%d", state);
+        -:   41:      }
+        -:   42:
+    #####:   43:      printf("\n Leaving startRoutine()... : %d************\n",end++);
+    #####:   44:     return 0; 
+        -:   45:}
+        -:   46:
+    #####:   47:void thread_run(pthread_t *thread) {
+        -:   48:  void *status;
+    #####:   49:  thread_start(thread);
+        -:   50:  //printf("\nWaiting for join %d", i++);
+        -:   51:  //Block execution of all threads in this current process until this thread terminates.
+        -:   52:  //kindof makes it serialize
+        -:   53:  //allow this thread to run completely first
+    #####:   54:  pthread_join(*thread,&status);
+    #####:   55:}
+        -:   56:
+    #####:   57:void thread_start(pthread_t *thread) {
+        -:   58:  pthread_attr_t attr;
+    #####:   59:  pthread_attr_init(&attr);
+    #####:   60:  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    #####:   61:  pthread_create(thread, &attr, startRoutine, NULL);
+    #####:   62:  pthread_attr_destroy(&attr);  
+    #####:   63:}
+        -:   64:
+    #####:   65:int main(int argc, char *argv[]) {  
+    #####:   66:  void *status= 0;
+    #####:   67:  int t = 0; 
+    #####:   68:  if(argc==2)
+    #####:   69:    t = atoi(argv[1]);
+        -:   70:
+        -:   71:  //thread_start(&threads[0]);
+    #####:   72:  thread_run(&threads[0]);
+    #####:   73:  printf("\nDone-0\n");
+        -:   74: 
+        -:   75:  //thread_start(&threads[1]); 
+    #####:   76:  thread_run(&threads[1]); 
+    #####:   77:  printf("\nDone-1\n");
+        -:   78:
+        -:   79:  //thread_start(&threads[2]);
+    #####:   80:  thread_run(&threads[2]);
+    #####:   81:  printf("\nDone-2\n");
+        -:   82:
+        -:   83:  //thread_start(&threads[3]); 
+    #####:   84:  thread_run(&threads[3]); 
+    #####:   85:  printf("\nDone-3\n");
+        -:   86: 
+    #####:   87:  pthread_join(threads[2], &status);
+    #####:   88:  pthread_join(threads[3], &status);
+        -:   89:  //pthread_join(threads[1], &status);
+        -:   90:  //pthread_join(threads[0], &status);
+        -:   91:
+    #####:   92:  printf("\nMain() exiting\n");
+        -:   93:
+    #####:   94:  return 0;
+        -:   95:}

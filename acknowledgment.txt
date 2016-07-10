@@ -25,5 +25,10 @@ WIKIPEDIA :
    AVL, RB-TREE
    https://en.wikipedia.org/wiki/AVL_tree 
 
+K&R solutions
+http://clc-wiki.net/wiki/K%26R2_solutions
+
+GeekForGeeks
+http://www.geeksforgeeks.org/
 
 

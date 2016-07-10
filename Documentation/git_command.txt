@@ -1,0 +1,62 @@
+GIT SETUP
+
+1. GENERATING A NEW SSH KEY
+
+$ ssh-keygen -t rsa -b 4096 -C "roger@gmail.com"
+  Add above generated key from
+$ cat ~/.ssh/id_rsa.pub
+to this  https://github.com/settings/keys -> New SSH key
+------------------------------------------------------------
+ 
+2. SETUP LOCAL GIT CONFIG
+
+$ git config --global user.email "roger@gmail.com"
+$ git config --global user.name "roger"
+------------------------------------------------------------
+
+  
+3. CLONE A NEW GIT REPO
+
+$ git clone git@github.com:sacchidanand/github-sac-code.git
+------------------------------------------------------------
+   
+4. CREATE/CHANGING NEW BRANCH
+
+$ git checkout master   OR
+$ git checkout Iteration-1
+
+$ git checkout -b iss53
+#Create & Switched to a new branch "iss53"
+#This is shorthand for:
+$ git branch iss53
+$ git checkout iss53
+------------------------------------------------------------
+
+5. TO CHECK CURRENT GIT REPOSITORY STATUS
+
+$ git status
+------------------------------------------------------------
+
+6. TO ADD CHANGES IN COMMIT STAGE
+
+$ git add  filename-1  filename-2
+------------------------------------------------------------
+
+7. TO COMMIT THE CHANGES AFTER ADDING IT IN COMMIT STAGE
+
+$ git commit -m "Commit message which will appear in git log"
+------------------------------------------------------------
+
+
+8. TO PUSH CHANGES ONTO REMOTE REPOSITORY (E.G.ITERATION-1 BRANCH)
+
+$ git push -u origin Iteration-1
+------------------------------------------------------------
+
+
+
+#Reference:
+https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging
+
+
+

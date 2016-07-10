@@ -1,0 +1,29 @@
+I want to extends my thanks many people, authors who have helped me to understand various concepts.
+My sincere gratitude goes to all of them.
+
+My mentor:
+Umesh Gaikwad
+https://www.linkedin.com/in/umesh-gaikwad-63726b7
+
+Sorav Bansal sir
+http://www.cse.iitd.ernet.in/~sbansal/
+
+Chandrasekhar sir
+http://www.chandrashekar.info/
+
+Animesh sir
+https://animeshblogs.wordpress.com/
+
+MIT 6.006 Introduction to Algorithms, Fall 2011
+[Srinivas sir, Eric sir]
+https://www.youtube.com/playlist?li
+
+Gate Lectures by Ravindrababu Ravula
+https://www.youtube.com/channel/UCJjC1hn78yZqTf0vdTC6wAQ
+
+WIKIPEDIA : 
+   AVL, RB-TREE
+   https://en.wikipedia.org/wiki/AVL_tree 
+
+
+

@@ -1,0 +1,159 @@
+Computer Networks
+
+1. Transmission delay
+	Time taken to put the packet onto transmission line.
+	T(t)= Length / Bandwidth
+
+2. Propogation delay
+	T(p) = Distance /velocity
+	
+	Round trip time (RTT) = 2 * T(p)	
+
+3. Queueing delay T(q)
+	Time taken by packet at receiver end to sit in queue before processed by receiver.
+
+4. Processing delay T(processing)
+	Receiver will take the packet from queue and will process it.
+	Depends on processor speed.
+...........................................................................................
+
+Flow Control Methods
+
+1. Stop & wait (Stop & wait ARQ)
+   Automatic repeat request 
+	Efficiency = Useful time / total cycle time
+		   =  T(t) / T(t)+2*T(p)
+	
+	Effecitve bandwidth / effective utilization.
+	ThroughPut = L / T(t)+2*T(p)
+		   = Efficiency * Bandwidth
+
+  #Disadvantage#
+  1. If packet lost, both will go in deadlock.
+		Use timer.
+  
+  2. If ack lost, assumes pkt lost, sender will re-transmit data packet. 
+     But receiver will face duplicate pkt problem.
+     Use Sequence-number for Data pkt.
+
+  3. If delayed ack, mismatch of data-ack number.
+     Use seq-num for Ack pkt for +1 next expected data pkt.
+
+  #Solution:
+  1. Use Timeout, sequence number for Data, ACK pkt.   
+........................................................................
+
+Error probability = p
+Total number of packet retransmission 
+
+  n + np + np^2 + np^3 ....
+= n(1 + p + p^2 + p^3 + ...)
+= n( 1/ 1-P )
+
+
+........................................................................
+
+Topic-2
+Capacity of channel/wire/link
+
+For Full Duplex:
+2* Bandwidth * Propogation Delay
+e.g. 1 Mbps will be put every sec in link.
+
+Effiecieny of Stop&Wait is less for high values called Thick Pipes
+........................................................................
+
+
+Sliding Window Protocol
+Windowing / Pipelining
+
+window size
+W = 1 + 2*a for better efficiency
+
+Min. reusable seq-numbers are 0-1-2-3, that's it
+= 1+2a
+
+Min bits for seq-num = log2(1+2a)  
+-----------------------------------
+
+1. Go back N:  GBN
+
+  1. Sender window is N >1 always
+  2. Receiver window is 1
+  3. ACK
+      a. Cumulative 
+          1. Less reliable, less traffic
+          For many data pkts, send only one ack.
+          Ack Timer is used.  
+
+#Relationship between window size and ACK number
+1. GB4 
+    If window size = 4, Seq = 0,1,2,3 
+    In case of lost ACK for all 1st set of pkts, 
+Problem: 
+    For out of order & corrupted pkts, silently discard of duplicate pkts, 
+    Timeout will happen at receiver side & entire window will be resend.
+    Receiver will accept correct order duplicate pkts, instead of discarding. 
+
+Solution:
+  Receiver should use N+1 seq num for identifying duplicate pkts.
+  Available seq number : W(s) + W(r)
+
+  No sorting, no searching required.
+----------------------------------------------------------------
+
+
+
+2. Selective Repeat  
+
+
+  1. Sender window is N >1 always
+  2. Receiver window is W(S) =W(R)
+     Sender selectively Re-send the pkt for which Timeout occurs
+
+      Efficiency is same like GBN
+      Re-transmission is similar like Wait&Stop.
+
+  3. ACK
+      b. Independent
+          1. More reliable, more traffic
+
+  Imp:
+  
+  1. In case of lost pkts, both GBN & SR behave same.
+  2. In case of corrupt pkt, SR will send NACK-0 for faster re-transmission.
+  3. ACk window is absent.
+  4. Search at sender, Sorting at Receiver
+
+#######################################################################
+
+
+                 | Stop & Wait   |      GBN     |   SR       |                          
+-----------------|---------------|--------------|------------|
+Efficiency       |   1/(1+2a)    |   N/(1+2a)   |  N/(1+2a)  |                          
+Buffers          |    1+1        |     N+1      |   N+N      |                 
+.................|...............|..............|............|       
+.................|...............|..............|............|       
+#Sequence Num    |    1+1        |     N+1      |   N+N      |                         
+Re-transmission  |     1         |      N       |    1       |                
+.................|...............|..............|............|       
+.................|...............|..............|............|       
+BW               |    low        |    High      |  Moderate  |                          
+CPU              |    low        |    moderate  |   High     |                                
+.................|...............|..............|............|       
+.................|...............|..............|............|       
+Implementation   |    low        |    moderate  |   Complex  |                                    
+Ack              |    Independent|    Cumulative| Independent|                                    
+.................|...............|..............|............|
+                                 |   HDLC - DL  |  TCP - TL  |  
+                                 |              |  SR 75 % + |
+                                 |              |  GBN 25%   |           
+.................|...............|..............|............|       
+
+
+
+
+
+
+
+

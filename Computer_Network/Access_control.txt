@@ -1,0 +1,60 @@
+In LAN we dont have ACK,
+So receiver will re-send/forward the pkts &
+sender will remove the pkts.
+
+Access Control
+  A. Broadcast link
+  B. Point to Point link
+
+1. TDM
+  a. Time slots are wasted if that node is not using it.
+................................................................
+
+2. Polling
+Efficiency 
+  = Useful time / cycle time
+            
+              T(t)
+  =  ------------------------
+     T(poll) + T(t) + T(prop)
+
+Effective Bandwidth = n' * BW
+................................................................
+
+ 
+3. CSMA/CD    (used in ethernet)
+    
+  Carrier Sensing Multiple Access / Collision Detection
+
+  0. No ACK in LAN
+  1. To detect the collision.
+      T(t) >= 2 * T(p)
+      L/B >= 2 * T(p)
+      L >= 2 * T(p) * B  (L =  minimum amt of data required to send)
+
+  2. Efficiency of CSMA/CD    
+      
+      [2*T(p) * many contention slots] is time wasted to start successful transmission.
+  3. Good for LAN, not for WAN. 
+  4. Good for Larger packets.  
+................................................................
+
+
+4. Backoff Algorithm for CSMAC
+
+  1. Binary exponential Backoff algorithm
+  2. Node who first wins contention will be having exponential increase in probability of winning next slots too.
+  3. applicable only for 2 stations
+................................................................
+
+  
+5. Token Passing
+
+  1. In LAN we dont have ACK,
+      So receiver will re-send/forward the pkts &
+      sender will remove the pkts.
+  2. Delayed , Early Token Re-insertion
+      Broadcast channel
+      
+
+

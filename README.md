@@ -1,5 +1,7 @@
-# github-sac-code
+#github-sac-code
 This is a repo created for sharing codes on following topics 
+
+
 
 ##Graph Traversal Algorithm
 - Breadth First Search (BFS)
@@ -20,5 +22,7 @@ This is a repo created for sharing codes on following topics
 - pthreads
 - File I/O 
 
+##Sorting
+- Quick Sort
 
 And some more misc C code and information is maintained.

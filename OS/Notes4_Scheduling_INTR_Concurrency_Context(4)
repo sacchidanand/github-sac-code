@@ -1,0 +1,207 @@
+**************************************************************************************************************
+			Linux Scheduler			
+			Concurrency	- 	Run_Queue, 
+									-	INTR : HARD_IRQ, SOFT_IRQ, PROCESS_CONTEXT, IDLE_CONTEXT
+**************************************************************************************************************
+
+KERNEL/USER_SPACE 
+	- common to both kthread & User_threads
+
+Triggering point for scheduler:
+1. Explicit blocking of current task, takes itself out of head of run-queue
+		Explicit call to schedule() is must.		
+		If no other process is there, go to init_task PID = 0.
+
+2. TIF_NEED_RESCHED flag is checked on INTR & USER_SPACE return path.
+		Timer tick INTR Handler sets this flag
+		scheduler_tick() -> 	do_irq() 	or 	do_soft_irq()
+		during user_mode to kernel_mode transition.
+		Timer_tick will set flag, will not stop current task
+		Once current_task is finished, on exit path it will check TIF_NEED_RESCHED flag & will call schedule()	
+			
+3. At period interval determined by Hz (CONFIG_HZ) constant, via 
+			scheduler_tick().
+..............................................................................................................................................................................
+
+Type of RUN_QUEUE scheduling types/classes
+		A. 	cfs_rq, rt_rq, dl_rq
+		B.  	Task can be present on either of following run-queue
+
+1.	cfs_rq	:	Completely Fair Scheduler
+					Task scheduled using SCHED_OTHER,	SCHED_BATCH,	SCHED_IDLE policies.	
+2. rt_rq	:	Realtime 
+					Task scheduled using SCHED_FIFO or SCHED_RR
+3. dl_rq	: 	Deadline
+					Task scheduled using SCHED_DEADLINE	
+					
+CFS Run_Queues are implemented as RB Tree, but why because old generation Round-Robin Scheduler	
+	a.	Problem is with CPU bound, I/O bound process
+		time slice - quantum of time given to process = 100 ms
+		scheduler might woke up every ms keeping track of time slice.				
+	b.	CPU bound - entire time slice doing some number crunching operation
+		I/O bound 	- text editor, spikes in time slice.
+	c.	CPU bound will run until pre-empted by scheduler.			
+	d.	I/O bound process added at the tail of run-queue,
+		needs to wait for CPU bound time slice to finish.
+		10 CPU , 1 I/O bound process
+		e.g. person standing in Queue , goes out , needs to go at the end of queue.
+			
+Excercise:
+How to make cpu exhaust CPU bound processing at high peak
+	$	cp	/dev/urandom		/dev/null	
+	$ top :	(Press 1 to see all the cores info)
+	$ kilall cp
+	a. No slowdown is observed for USER input as I/O process
+		$ ps -ax	or  typing on terminal
+		
+POSIX	standard.
+	1. SCHED_OTHER	(Round-Robin)
+	2. SCHED_FIFO	
+	3. SCHED_RR	(Real Round Robin)
+			
+Linux Standard
+	1. SCHED_IDLE	: idle than the most idle process, virtual Runtime updated with = highest VRTIME + 1
+		set_setscheduler(pid, SCHED_IDLE)
+		e.g. Anti-virus, JVM Garbage Collector									
+		
+Observation :
+1. There is no problem in kernel functions, but in JVM user space : lock contention for user thread.
+2. Use lock_free algorithm in USER_SPACE.
+3. No more fixed time-slice is used in CFS.
+4. RB TREE order on Process Virtual Runtime in nanosecond (Weight factor)
+	a.	node represent sched_entity(s)	by their VRTime.
+	b. process comes alive just now & who used less CPU time is kept at head of run-queue by pre-empted.
+			e.g. mix process = I/O + CPU bound	
+	c.	Web Browser	- 	fetching network packet (I/O) +		Rendering GUI (CPU)
+	d. Process VRTIME with high nice value updated less frequently.	
+		High Priority process eventually will start competing with low (Anti-virus) process,
+		This is not tolerable, but CFS it happened.						
+5. Scheduler can decide when to take process out at scheduling granularity.
+	i.e. Every 1 ms Scheduler wokes up & decide which process to run.	
+****************************************************************************************************************
+
++++++++++++++++++++++++++++++++++
+			KERNEL Concurrency 
++++++++++++++++++++++++++++++++++
+
+Execution context			
+1. Any function in linux kernel woul be executing in following Context
+		a.	HARD_IRQ_CONTEXT 	|	(Top_Half)
+		b.	SOFT_IRQ_CONTEXT	|	TASK_LET			
+		c.	PROCESS_CONTEXT	|	(Bottom_Half)	SCHED_SOFTIRQ		KTHREAD 
+		d.	IDLE_CONTEXT			|
+
+Directory:-
+1. HARD_IRQ_CONTEXT 	(Top-Half)
+	/Samples/03_irq/keylogger/keylogger.c
+	
+2.	SOFT_IRQ_CONTEXT				
+	/Samples/04_concurrency/02_keylogger_tasklet
+	
+3.	PROCESS_CONTEXT	(Botton-Half)	SCHED_SOFTIRQ		KTHREAD 
+	/Samples/03_irq/keylogger/keylogger_threaded.c
+	
+4. IDLE_CONTEXT
+*****************************************************************************************
+Observation:
+	1. Most of the INTR are Top_Half (HARD_IRQ_CONTEXT)
+		Schedule it & exits, so stack stealing is good.
+	2. They must finish in 10's of microSecond
+			if ( fIntr()	< 100 microSecond), divide into Top_Half + Bottom_Half.		
+	3. All SOFT_IRQ (total < jiffies) (100 microSecond)	
+			Use TASK_LET
+
+Aim : Process INTR faster
+		INTR can be process in 			
+		1.	10 micro, 					HARD_IRQ		
+		2.	100-200 micro,			SOFT_IRQ			=	TASK_LET
+		3.	more > half Jiffies		THREADED_IRQ	=  HARD_IRQ + KTHREAD
+				600 micro- 10 ms			request_threaded_irq(2 function pointer)	
+*****************************************************************************************
+		
+A. HARD_IRQ_CONTEXT	(Top_Half)
+
+1. Preempts the current_task & services hardware interrupt.
+2. PID =0 stack is used, because no one in run-queue
+	*current = 0
+3. Use the stack of current_task is using. Never use local buffer for kernel stack (KERNEL_Stack = 4KB) & Avoid DFS recursion.
+4. To register any function to run in HARD_IRQ context, register INTR Handler.
+				-> keylogger_handler() -> request_irq() -> do_IRQ() -> common_interrupt()
+
+5. Excercise : How to handle key_strokes (/Samples/03_irq/keylogger/keylogger.c)		
+		scan_code	= inb(0x60)		//port	- scan code pressed or release.
+		dump_stack();			
+		module_init()
+********request_irq(
+									INTR_number	; keyBoard = 1,	
+									keylogger_handler(), 
+									IRQF_SHARED
+									"keylogger"	(/proc/keylogger),
+									keylogger_device (arguments )														
+								)				
+		module_exit(){
+					free_irq(1, keylogger_device);		// data passed last time as a cookie
+		}
+		
+6. Run LKM 
+	$		insmod keylogger.ko
+	$ 		cat /proc/interrupt	
+		>>	1:			keylogger 2 handlers for same interrupt.
+	2 ways keyboard input will be read
+		a. i8042		- read for MMIO region
+		b. keylogger - read it from inb(0x60)
+*****************************************************************************************		
+		
+B. PROCESS_CONTEXT	
+	// HARD_IRQ	+  KTHREAD	
+/Samples/03_irq/keylogger/keylogger_threaded.c
+
+1. If Botton-Half > jiffies 100 microSecond, create THREADED_IRQ handlers.
+2. if INTR_handler does buffer copy it can go upto 100 microSecond.		
+3. Excercise:		
+	keylogger_hard_handler()
+	keylogger_thread_handler()
+	request_threaded_irq(	1,
+											keylogger_hard_handler,		// HARD_IRQ	:	
+											keylogger_thread_handler,		// KTHREAD
+											IRQF_SHARED,
+											"keylogger", keylogger_device)
+		
+4. First it will call HARD_IRQ, keylogger_hard_handler().
+		Return1 - not my intr : NULL
+		Return2- if INTR handled < 10 micro, Return IRQ_HANDLED,
+		Return3- Slow path, Return IRQ_WAKE_THREAD
+
+5. e.g. Ethernet card driver.
+		a.	 (few micro)	Go & check Ethernet Status register = not my intr, Return NULL.
+		b.  (few micro)	My_INTR && Buffer/DMA Overrun, 	reset controller, Return IRQ_HANDLED immediately.
+		c.  If Ethernet controller says incoming packet, we can't process all packet in INTR_Handler
+			 Most Hardware device will queue their data, e.g. Keyboard buffer = 40 bytes
+		d.  do IRQ_WAKE_THREAD, then KTHREAD dedicated for this 2nd handler added on run-queue.
+			
+6. When Scheduler runs this KTHREAD, keylogger_thread_handler( ) is called.
+	KTHREAD will take all buffer data/packets.
+	exception : gravity sensor have register, no buffer, only last value.
+	
+7. At exit path, KTHREAD will sleep() out of run-queue. Make KTHREAD is blocking again.
+8. Excercise:				
+	$ insmod keylogger_threaded.ko				
+	$	ps ax				(sleep)
+		2677	| 	S 	|	[irq	|	1-keylogger]
+		All THREADED_IRQ specific KTHREAD, will have signature [irq/IRQ_NUM-Suffix]
+		
+9. Advantage:	for all Bottom_Half routine (PROCESS_CONTEXT)
+		a. KTHREAD will not stop INTR_handler, will compete with other task on run-queue. Better responsive system.		
+		b. Never blocks INTR_Context, run KTHREAD in PROCESS_Context.
+		c. HARD_IRQ, SOFT_IRQ does not hogg the CPU.
+**************************************************************************************************************
+
+C. SOFT_IRQ_CONTEXT	
+		TASK_LET
+
+		
+				
+
+
+
+		

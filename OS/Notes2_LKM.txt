@@ -1,0 +1,703 @@
+Day 3 - Lecture 4
+............................
+
+	LKM	
+	- just like text, data, heap, stack segment
+			MOD_INFO section is added for all module METADATA info.
+	- struct module will be placed in
+			 a separate section is created ".gnu.linkonce.this_module"			
+	- if module parameters is changed, we need to inform module asynchronously to 
+		look for this changed params.
+	
+	/Documentation/kbuild/modules.txt
+	/Documentation/kbuild/kconfig*
+	
+***To compile full kernel binary
+	$ make 0=/usr/local/build/linux-4.3.3-vbox/ menuconfig		(path for *.o file to store)
+		(to make build folder mutable, use 
+		$chattr -R -i /usr/local/build/linux-4.3.3-vbox/)
+
+***To compile LKM as module OOT
+	Option-1
+			$build			(cd /usr/local/build/linux-4.3.3-vbox/)
+			$ make SUBDIRS=/root/Samples/01_modules/01_hello_world 		modules
+				>> obj-m := khello.o 	(only this makefile param's will be build.)
+
+	Option-2
+		$ echo make -C /lib/modules/$(uname -r)/build 			SUBDIRS=$(pwd)				modules				(echo for shell expansion)
+				$	make -C /lib/modules/linux-4.3.3-vbox/build 	SUBDIRS=/root/Samples/01_modules/01_hello_world_modules		modules
+				
+	Option-3
+		Makefile for all OOT module
+		vim Makefile
+			>> obj-m :=khello.o
+			
+			default:
+				$(MAKE) -C  /lib/modules/$(shell uname -r)/build   SUBDIRS=$(shell pwd)	modules
+			
+			clean:	
+				$(MAKE) -C  /lib/modules/$(shell uname -r)/build   SUBDIRS=$(shell pwd)	clean
+........................................................................................................................................................
+	
+excercise 
+		return -1, +1, 0 & see what happens in module
+	
+1. LKM are compiled my_module.o files , ELF relocatable objects with some extra section added.	
+2. LKM are not processes/task, but shared libraries loaded dynamically.
+		- NOT scheduled, NOT shows up in process list.
+
+		3. Bug in module means bug in kernel	; hence no protection.
+		4. All symbols in LKM are name-mangled, all symbols are private to module, no collision with other LKM symbols.
+		5. we need to EXPORT symbols for other LKM to reuse.
+		
+6. Kbuild used for LKM makefile. We cant build module without building kernel itself
+7. Distro vendors like UBUNTU gives /boot/ & /lib/modules ( *.o files used to create this is not given)
+	*.o will be generated after compiling kernel from sources.
+	
+src: /usr/local/src/linux-4.3.3
+build: /usr/local/build/linux-4.3.3-vbox/		(drivers/net/ethernet/intel/e1000/e1000.o)
+			All built in file are in single file vmliux.o	ELF relocatable
+
+LKM : /lib/module/4.3.3-vbox/kernel/				(drivers/net/ethernet/intel/e1000/e1000.ko)			
+			From /src location only config is build which are selected to produce *.ko files
+
+		8. build: /usr/local/build/linux-4.3.3-vbox/ files are necessary for compiling LKM.
+			version_magic is embedded in kernel binary for each version as per kconfig file.
+			version_magic of LKM and kernel is checked
+			e.g. Binary drivers LKM for particular kernel build
+			force-loading a module will relax version check, but on SMP LKM on Uni-processor machine will not work.
+........................................................................................................................................................................................................
+
+khello.c 
+
+2 options LKM or built-in
+When Built-in, module_init converted to function pointer for init_call_level-6	: devices.
+
+		1. //Module-section : Module Headers in LKM binary	
+			MODULE_LICENSE("GPL");
+			if other than GPL, it will add taint_flag[] have 'P' (bit_mask) in kernel for pro-prietary bit added in kernel.
+				many debugging functions are disabled.
+		
+		2. LKM makefile
+				part-a:	
+					BUILT-IN	-	 kconfig must !
+					inside kernel source tree 
+					>> obj-$(CONFIG_KHELLO)	:= khello.o	
+					- need Kconfig file too !
+				
+				vi Kconfig--->
+					config KHELLO
+					tristate "Build a simple helloworld module"
+					default y	(if m = LKM) (n= dont build)
+					help 
+						Say y here if you want to build a simple hello world 
+						kernel module
+...............................................................................................................................
+				part-b : 
+					LKM
+					OOT modules
+					>> obj-m := khello.o (build as a LKM)
+					
+		3. $vi src/drivers/Kconfig
+				>> source "drivers/khello/Kconfig"	(added in the end)
+			
+		4. After compiling LKM as built-in binary
+				
+				$ make 0=/usr/local/build/linux-4.3.3-vbox/ menuconfig		(path for *.o file to store)
+					(to make build folder mutable, use 
+				$chattr -R -i /usr/local/build/linux-4.3.3-vbox/)
+
+				- a file is created /usr/local/build/linux-4.3.3-vbox/.config
+					it will have CONFIG_KHELLO=m
+IMP		
+******5. OOT LKM compilation,
+			$build
+			$ make SUBDIRS=/root/Samples/01_modules/01_hello_world_modules
+				>> obj-m := khello.o 	(only this makefile param's will be build.)
+				
+		6. nm khello.o
+			>> list all symbols in khello.o
+			
+		7. /root/Samples/01_modules/01_hello_world_modules
+				- khello.mod.c
+				- just like text, data, heap, stack segment
+					MOD_INFO section is added for all module METADATA info.
+				
+				- __visible MACRO
+					a global variable will not be used in this mod.c file
+					kernel will load this & someone will use it.
+					But smart GCC compiler -O2 optimization will evict the global variable declared & not used in source file.
+					__visible : dont touch this, somebody will use it, make it visible.
+				
+				- struct module will be placed in
+					 a separate section is created ".gnu.linkonce.this_module"			
+					Will not go to data section.
+					
+		8. 	*ko file after merger
+			cc khello.o khello.mod.o -o khello.ko
+						
+		9. Module.symvers			
+			- multi module dependency
+		
+		10. module.order
+			- In which order the module is loaded.
+..............................................................................................
+
+
+1. Load a module			
+	$insmod khello.ko
+		- pr_notice will go to kernel log buffer & not printed on screen.
+		- cant load the same module twice	
+		
+2. dmesg
+	- to look at snapshot of kernel log.
+	[48976.87429]		khello_init: greetings from kernel space !
+	- debugging option for printing time is enabled at kernel compilation	
+					
+	- To clear old msg & print it
+		$dmesg -c
+
+3. lsmod	(List the loaded module)		
+	$lsmod
+		Module		Size 		Used-by
+	------------------------------ 
+		khello			1021 	0
+
+	-	If reference count : Used-by = 0, 
+		we can safely unload a module.
+	- if refcnt == -1, KERNEL_CRASH happens.	
+		use dmesg for viewing kernel crash message.
+		
+4. $rmmod	khello
+	$dmesg -c
+		[48976.283745]	khello_exit: called !
+		
+	only when refcnt is 0, we can unload/rmmod module.
+		/sys/module/khello/refcnt,	coresize, initsize, initstate, srcversion, taint = O (OOT_module)
+		
+	we can add option to forcefully unload module, that will taint module.	
+..................................................................................................................
+
+
+
+More on system calls
+			
+	1. insmod		->	finit(0x3,)		: Linux specific System call
+			- finit() is similar to mmap() in user space.
+			MMAP
+				- open a file
+				- create a virtual memory space which will map to that underline file.
+				- 
+			F_INIT	
+				- tells kernel to allocate memory of filesize & load the entire module content in kernel's memory.
+				
+			$strace insmod khello.ko
+				open()
+				read()
+				//User space verification to check valid proper ELF binary
+				finit( 0x3, 0x854637 , 0)		
+		
+	2. lsmod		(ONLY for LKM)
+			- cat /proc/	
+			- state : MODULE_COMING , MODULE_GOING, MODULE_LIVE		
+					
+	3. For ALL built-in & LKM
+*******	$	ls /sys/module/helloworld/parameters -l (no exe 644/640)
+		-	as pseudo file : variables
+	
+	4. Module symbols are also visible
+		- cat /proc/kallsyms	(KERNEL symbol table)
+		- grep '\[khello\]$'	/proc/kallsyms
+					
+				Address		property		symbol 		module_name	
+				-------------------------------------------		
+				fcdee0a4			t				init_module		[khello]	
+					
+		- t : function
+			t, r, w : data segment
+					
+	5. Debug  symbol address		
+			(fcdee0a4: init_module	)
+		
+			$ gdb /boot/vmlinux-4.3.3-vbox		/proc/kcore
+			(gdb)	p (char *) 0xfcdee0a4
+				$1 = 0xfcdee0a4 "greetings from kernel space ! "
+			(gdb)
+......................................................................................................................			
+
+
+
+Each process will have its own FD array
+Open a file, file_struct added in System_FD
+add FD is added in System_FD
+
+This File Descriptor table is a pointer to System_FD.
+File System Driver will take care of allocating it.
+
+Whenever allocate a file slab, Flie slab constructor	 will actually make an entry in System_FD.	
+File_Max : how many FD can be opened ? 
+it is limit of System_FD table.
+
+Each process have their own offset, even the same file is opened.
+file_struct : FD
+	{
+		inode * : System_FD;
+	}
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+								DAY-4		Lecture-1
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	
+	$modinfo 	khello.ko
+		- List all the modinfo KEY,VALUE pair in modinfo section
+		
+	$ vim include/linux/module.h
+
+	// kernel build as a static monlithic binary
+	// place module_init in __initcall levels as built-in binary
+	#ifndef 	MODULE
+			
+		module_init()	- driver initialization entry point
+		#define 	module_init(x) 	__initcall(x)
+	
+	1. In kconfig, we can tell 'No support for LKM'
+		e.g. for appliances no LKM
+
+	2. For device driver developers, 
+	MODULE_DEVICE_TABLE
+		e.g. PCI DD can work for many configuration of devices
+			20-30 variations of board with unique number
+........................................................................................................................................
+
+lets add __init at 
+int	 __init 		khello_init(void)
+-------free_init_mem
+					1. free large chunk of kernel memory which is not required
+						e.g. start_kernel
+						many functions are prefixed with __init macro
+						hash define to compiler directory.
+							.init.text section -- free this section
+
+	1. Now grep khello /proc/kallsyms	will not show khello_init in text section,
+		its now in .init.text section
+		
+		This all functions deleted post-module load in .init.text
+		
+	2. In USER_SPACE, we have similar feature in C.SECTION for shared libraries	 	
+..............................................................................................................................
+
+__initdata :	.init.data	section
+	- also make __init for function using this data.
+..............................................................................................................................
+
+KERNEL_CRASH;
+		1. In USER_SPACE, we use ASSERT, ABORT to stop the execution 
+			In KERNEL_SPACe, we use PANIC, when KERNEL failed to boot successfully.
+		
+		2. Last job of the KERNEL is to boot the root file system.	
+	
+		3. OOPs : treated as BUG
+			Bug: unable to handle kernel paging request.		page fault-dangling pointer
+			
+		4. only debug help	
+			dmesg 
+			
+		5. core file happens for only USER_SPACE process.
+
+		6. W - warning printed by kernel earlier
+			O- OOT kernel tree
+			D -kernel dies recently
+				another module can also start crashing.
+				kernel already crashed before, give me oldest BT.
+	
+		7. we cant unload a module.
+			-f 
+			no task_struct structure, because it is nt process / thread / task.
+			not scheduled by scheduler
+			actually like a shared library in USER_SPACE. 
+			
+		8. in old version kernel, rmmod will stuck in D state - Un-Interruptible state.
+			DEADLOCK
+			
+		9. No core generated because LKM are not processes or thread	
+			only dmesg is used to analyse the crash
+			KDUMP : allow to generated core dump for entire kernel.
+....................................................................................................................
+
+Analyse dmesg
+	1. Use 	stack & call trace	matching 2 addresses are local variables for 2nd frame2 function.
+	2. Poison the buffer with known values for better prediction.
+..................................................................................................................................
+
+KGDB
+			1. Machine - 2	
+				1- KERNEL with KGDB support 
+				2- GDB running
+				
+			2. Machine-2 with GDB running, remotely can debug that machine
+				And if that crashed we can find out what went wrong.
+................................................................................................................................................
+
+lets add __exit
+					1. For LKM __exit have no meaning.
+					2. If build-in module, then .exit.txt section will contain this function
+					
+					All section is deleted from KERNEL final build vmlinux.o
+				
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+git checkout module_init_return_value
+
+vim MakeFile
+Part-1
+>>install				
+	$(MAKE) 	-C 	$(KDIR) 	SUBDIRS=$(PWD)	module_install	
+	
+	Problem :
+		for insmod <full path to *.ko file must be provided>
+		rmmod doesnt expect path, only module_name from lsmod	
+			1. No need to provide path
+			2. Take care of module dependency resolution (not by insmod)
+					order: module-B	->module-A
+				
+	Solution : 
+		1. Install module first
+		2. Use modprobe
+		
+	1. All built-in kernel module are part of /lib/modules/4.3.3-box/kernel	
+	2. All OOT LKM are in /extra, once we run 
+		$make install 
+			- It saves helloworld.ko in /extra 
+		$depmod -a
+				- regenerates modules.dep, modules.alias, etc after scanning all MOD_INFO section in /lib directory.
+				- entry is created in "modules.dep" file for 
+					/extra/helloworld.ko	:	<all dependency lists here automatically by depmod -a>
+	3. now 
+		$modprobe helloworld 
+			- will do same job as insmod helloworld.ko 
+	
+	4. modinfo helloworld
+			- filename / module name
+			
+	5. Use  Remove / UNLOAD module
+		modprobe -r helloworld
+		
+	6. USER_DEFINED_MODULE Directory
+		rm -rf extra
+		
+		INSTALL_MOD_DIR=cisco
+		install				
+			$(MAKE) 	-C 	$(KDIR) 	SUBDIRS=$(PWD)	INSTALL_MOD_DIR=cisco	module_install	
+		
+ ............................................................................................................................................................
+
+Part -2
+Makefile	
+		1. khello.o cant be removed.
+			or 
+				a.c b.c c.c d.c create a.o b.o c.o d.o
+				Now I want to create one single sachin_algo.o file
+				
+				sachin_algo-objs := a.o b.o c.o d.o
+				
+			Solution:
+				obj-m := khello.o
+					>>changed to 
+				
+				obj-m := helloworld.o				
+				helloworld-objs = khello.o	
+............................................................................................................................................................ 
+	
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@	
+	
+case_1:	Return -ve value.
+			: __init khello_init(){
+					return -3
+				}
+				
+				insmod helloworld.o 
+				>> Module has wrong symbol version
+						
+				-3 : indicates symbol version mis-match
+				-1 : operations not permitted.
+				
+				>> if init_module() returns 0, module left in memory.
+				>> if init_module() returns -ve , module unloaded from memory.
+						-ve value is passed as return value of that 	f_init() system_call
+				>> if we want fail the driver loading for various reason, correspoding -ve value is returned.		
+case_2	: Return +ve value
+				
+				- either 0/-ve value convention 
+				- warning : do_init_module()
+				- module will get loaded with warning.
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++				
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+git checkout module_params
+
+Pass arguments to LKM
+	$insmod khello.ko msg=\"this is test message\" io=0x440
+		
+module_param(msg,	charp, 		0644);
+MODULE_DESCRIPTION("This is example of params for LKM");
+MODULE_PARM_DESC(msg, "A string message");		
+.........................................................................................................................................................				
+To print in Hex format
+$  printf 	"%x\n" 	$(</sys/module/helloworld/parameters/io)
+
+// -n to remove newline at the end
+echo -n "hello world, sachin" > /sys/module/helloworld/parameters/msg
+
+Use_case_1: 
+						Run time configuration for Drivers
+						
+				- suppose driver running, enable debug for sometime,
+				- disabled after sometime
+............................................................................................................................................................
+
+For built-in Kernel,
+	1. Use helloworld.msg = "Test Message"
+				acpi.debug_layer = HW
+	2. This global parameters are private per modules
+	3. 	$cat Documentation/kernel-parameters.txt			
+........................................................................................................................................................................................................
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+IMP
+	- if module parameters is changed, we need to inform module asynchronously to 
+		look for this changed params.
+	- io port changed from 230 to 330
+		register & de-register
+		it should work instantaneously
+		
+		
+git 	checkout 		module_params_callback		
+
+1. module_param_cb(	io, 	&khello_io_ops, 	&io, 		0644);
+
+2.	struct kernel_param_ops khello_io_ops = {
+		.set = khello_set_io,		=> param_set_ulong wrapper
+		.get = param_get_ulong		
+	};	
+	
+3.	int khello_set_io( 	const char  *val, 	const struct	 kernel_param  *kp)
+	{
+			// Input Validation for ranges	[0	,	5]
+			unsigned  long v;
+			ret = kstrtoul(val, 0 , &v)
+			if(unlikely(ret))
+			// branch prediction unit 
+				conditional jump can't make prediction
+			
+	}
+
+	
+$echo 10 > /sys/module/helloworld/parameters/io		[0,5 is expected]
+>> invalid arguments
+....................................................................................................................................
+
+Well managed & documented:
+	1. Use only for setting configuration
+	2. not use for debugging, statistics
+
+All latest drivers from last 6-7 years
+	Use /sys/modules/param	(pseudo file)
+e.g. /sys/module/helloworld/parameters/io
+
+information can be obtained from 
+$ 	modinfo khello.ko
+
+pseudo file is good : 
+	- open/read/write/close
+
+sysctl interface	
+	- clutter
+
+$	ls /proc/sys/net/core/ip4
+>> Bad
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+			Day 4 		Lecture-2
+			
+	Multi Module dependency
+cd 02_multimodule/	
+git checkout exporting_symbol
+
+square 
+test_square
+
+#include <linux/export.h>
+EXPORT_SYMBOL(square);
+
+Module.sysmvers
+CRC checksum in Hex
+
+Copy Module.symvers Record in test_square
+It will work !
+
+
+Problem :
+If we change the prototype, it will change the checksum in Module.sysmvers
+Copy it again
+...........................................................................................................................
+		1.	We cant unload a module which is in use.
+		2.  We cant load the module without installing prior module in proper order.
+				insmod square
+				insmod test_square
+		
+		Solution	:	dependency resolution 
+					Use make install	
+						modprobe test_square
+						
+						modprobe -r test_square
+							it will unload all the dependant module
+
+							
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+$	cat 	/proc/helloworld
+Real world expample
+	How to add your own custom directory in /proc in directory.
+	/proc/helloworld
+	
+cd 04_proc_hello
+git checkout master
+
+	linux/proc_fs.h
+
+Option-1
+*********	
+	struct proc_dir_entry	*proc_hello_file;
+	proc_hello_file  - proc_create(	filename , permission, parent directory, files operations)
+	- proc_create(	"helloworld" , 0644, NULL,	 &proc_hello_ops)
+	
+	**	 structure of function pointers of file I/O protocol (open, close, read, write, mmap system_call() on FD )
+	struct file_operations proc_hello_ops
+	{
+		read: proc_hello_read
+	}
+	
+	Provide a callback handler you register.
+	When someone tries to open a file 'helloworld', 
+	it invoke a read() system call,
+	read() implementation should call this particular function.
+	
+	
+	read(fd, buf, size, offset)
+	proc_hello_read(file *filp, char __user *ubuf,  size_t count,  loff_t *off)
+		- __user , safety complie time annotation.
+		- try to perform any pointer arithmethic directly will flag a compile time warning.
+		- any user_space address not to be trusted , because fault can occur in KERNEL_MODE.	
+		
+		- debugging : dump_stack(). 
+			- 	KERNEL stack trace()
+		
+		- memcpy( dest, src, length)	
+			1. memcpy can lead to fault in kernel
+				- user_space buffer might not get allocated.
+				- invalid buffer 
+			
+		- copy_to_user (ubuf,  proc_hello_msg, strlen(proc_hello_msg))
+				1. Ensure user_space buffer is a valid address.
+					Is it part of one of the Virtual memory areas ?
+					should be malloc / statically allocated buffer
+				2. check kernel write access ?
+					- 	ACCESS_OK(ubuf, WRITE)
+					- 	disable pre_emption upto jiffy (atomic)
+							-	fetches pages for that particular buffer, populates the page table.
+							-	do_page_fault()
+							-	memcpy()		: scheduler may context switch, LRU
+					-	enable pre_emption
+				3. return value of copy_to_user 
+						success 	=	 0 
+						failed		= how many bytes are yet to be copied.
+					
+						- before memcpy(), we will kmalloc(GFP_ATOMIC)
+							 maybe 64 KB is not allocated
+				
+				4. WRITE :	copy_from_user()
+					
+				5. RET
+						- RET = 0
+							1. PIPE /SOCKETs
+								- no data available 
+							2. Disk / Filesystem 
+								- EOF
+						- +ve 
+								pending buffer
+						- -ve
+								error
+						- -EFAULT
+								- custom device driver	
+								- SEG_FAULT deliver in USER_SPACE.
+								- process crashed with SEG_FAULT 
+				6. 
+..............................................................................................................................
+
+cat system_call
+	1. if filesize == 0, read 64KB 
+................................................................................................................................................
+
+Option-2
+*********
+Simple  / Alternate way to display content for read() 
+seq	: open: proc_hello_open
+
+All the code in /proc is present in 
+		src/fs/proc/cpuinfo.c
+		
+	cpuinfo:
+		1. strcut seq_operations{} like a linked-list traversal, sequence iterator.
+
+		2. Alternate way to display content for read() 
+			seq	: open: proc_hello_open
+			
+		3. This proc_hello_open	
+			-> single_open(filep, 	proc_hello_show, NULL)
+
+		4.proc_hello_show
+			- will take of display info when read() is opened for 
+				$ cat 	/proc/helloworld
+			- simple 
+					seq_printf()	used instead of copy_to_user() complex call
+....................................................................................................................
+
+Using Option-2, we can create interface for jiffies.
+
+IMP Note :		
+							READ
+						1. /proc/jiffies	should be used for read() purporse.
+								exposing statistical information about driver.
+								Code is present in src/fs/proc
+							
+							problem:	For USER_SPACE program  
+										while reading /proc/jiffies, dont allow to unload it.
+							solution: try_module_get(THIS_MODULE)	will increment the refcnt++;
+											in open() : callback handler
+										
+										When somebody opened a file, dont allow anyone else to open the same file.
+										e.g. write()
+											atomic_t proc_hello_open_count = ATOMIC_INIT(0);
+												struct with integer inside it.											
+											atomic_add_unless(&proc_hello_open_count, 1, 0)
+											
+											atomic_dec_if_positive(&proc_hello_open_count)
+											module_put(THIS_MODULE);
+											
+							WRITE
+						2. for write() , better to use module_params()
+							better & cleaner interface than write() callback handlers.
+..................................................................................................................................							
+							
+					
+								
+					
+					
+					
+					
+							

@@ -1,0 +1,2283 @@
+The kernel stack is two pages in size; typically, that is 8KB on 32-bit architectures and 16KB on 64-bit architectures.
+Because in this setup interrupt handlers share the stack, 
+they must be exceptionally frugal with what data they allocate there. 
+Of course, the kernel stack is limited to begin with, so all kernel code should be cautious.
+[1] A process is always running. When nothing else is schedulable, the idle task runs.
+
+Return should be at one place in whole function
+
+To print in Hex format
+$  printf 	"%x\n" 	$(</sys/module/helloworld/parameters/io)
+
+// -n to remove newline at the end
+echo -n "hello world, sachin" > /sys/module/helloworld/parameters/msg
+
+$cat /proc/self/status
+	- information about cat process
+
+all under /proc/sys can be done via sysctl 
+all are system calls	>>	sysctl vm.overcommit_ratio
+								$ 50
+	
+Buddy is array of Linked List
+Is it optimal solution ?
+
+USER_SPACE allocation is only via DEMAND_PAGING via get_free_page()
+
+preempt_disable : scheduler cant take any pre-emption decision.
+
+strace()
+				- to list all system calls
+				$ strace ./hello
+PC : will always have virtual address				
+
+****************************************************************			
+				Directory : 
+****************************************************************
+src: /usr/local/src/linux-4.3.3
+build: /usr/local/build/linux-4.3.3-vbox/		(drivers/net/ethernet/intel/e1000/e1000.o)
+			All built in file are in single file vmliux.o	ELF relocatable
+
+LKM : /lib/module/4.3.3-vbox/kernel/				(drivers/net/ethernet/intel/e1000/e1000.ko)			
+			From /src location only config is build which are selected to produce *.ko files
+
+	task_struct:			
+include/linux/sched.h			
+				
+				
+valgrind
+File System:
+Organise abstraction of kernel managed resources.
+
+Virtual memory
+Virtualizing the address space of a process.
+Uses Page table to calculate Virtual to Physical Address dynamically.
+
+Demand Paging
+When memory is allocated, it is allocated in VA space.
+There is possbility that corresponding Physical page might not be present in Main memory.
+When process tries to access page in main memory which is not having any page table entry.
+When process generates a virtual address that is not map in a page table entry, page fault is generated.
+
+Process is block and taken out of running queue
+for whom we cant allocate pages.
+---------------------------------------------------------------------------------------
+What happen to make memory access Deterministic ?
+
+Traits of Real Time Application. different for RTOS
+
+A. CPU Access Deterministic scheduling
+	1. I know when i will be pre-empted or 
+	2. I decide when i should be pre-empted	(blocking call invoked by itself : yield())
+		- co-operative multi tasking
+
+	solution : sched_setscheduler
+	Each process can be applied with different algorithm.
+	RoundRobin SCHED_RR dedicated time quantum
+	here in RR high priority process will wait,
+	
+	In FIFO, I decide when to leave the cpu, true co-operative multi-tasking	
+	
+B. Memory access Deterministic
+	1. Pin it - used in appliance.
+	Mlock - posix standard
+	 - malloc return value & length
+	 - pages in-evictable
+
+***********************************************************************
+
+malloc fails only when it cant find continuous VA memory.
+it doesnot understand physical memory.
+if overcommiting = disable, allocate only limit to physical memory.
+
+/proc/meminfo will give some info about VA/PA ratio but exact PA usage is difficult.
+
+No time-slice Scheduling exists
+Scheduler is called at timer tick granularity.
+
+No page fault, Demand paging in kernel mode.
+task_structtask_struct in kernel is PCB set aside physically for kernel.
+Page table for task_struct is present in kernel Page table entry. 
+
+Kernel is fully pre-emptible, until and unless kernel disable pre-emption.
+Hardware Interrupt has highest priority, Schedular runs via Hardware interrupt.
+Scheduling pocily CFS uses RB-TREEs implement timeline of future task execution, with nano-Second granularity of accouting.
+Sleeper fairness is present.
+
+O(n) : epoch + half epoch
+O(1) :  	expired, active array pointer exchange in O(1) time.
+			complex heuristics used to mark a task as interactive or non-interactive.
+			sleep more, interactive process, more priority
+			run Queues, Priority array.
+			Active processes are placed in an array called a run queue, or runqueue with priority values. 
+CFS:
+		RB Tree with "sched_entity" node	indexed by processor execution time in nano-second.
+		If the process spends a lot of its time sleeping, then its spent time value is low and 
+		it automatically gets the priority boost when it finally needs it. 
+		Hence such tasks do not get less processor time than the tasks that are constantly running.
+
+Group CFS
+		
+Kernel can pre-empted at any point of time.
+Interrupt are disabled on for small amount of code, critical section.
+Open () system call can be pre-empted while running in kernel mode & next process can be schedule from User mode Space.
+PREEMPT_DISABLE flag only for some critical section, exception.
+
+High performance & scalability is achieved.
+
+Timer (HW) Interrupt -> 
+	Schedular() -> check PREEMPT_DISABLE counter global variable for per CPU.
+e.g. Notice outside room
+
+CLI for disable Hardware interrupts.
+Granularity of Critical section is more fine-grained.
+e.g. placing water balls dont cause harm.
+ 
+foo()
+	PREEMPT_DISABLE
+	bar()
+	
+bar()
+	PREEMPT_DISABLE
+	
+now we need to call PREEMPT_ENABLE 2 times.	
+=========================================================================
+file on disk : c library contains open/close/read/write call syscall(__NR_open) .. signatures.
+this syscall() implementation not in C library, it is present in kernel memory.
+
+Syscall() reside in Virtual dynamic Shared Object (VDSO/ vsyscall)
+There is no file on disk for syscall();
+implementation of kernel syscall is mapped into User's virtual Address space.
+It cause dedicated hardware fault : syscall fault/TRAP.
+This is kernel entry point for user land process.
+
+
+CPU Trap / Fault handler subsystem
+Syscall Interface / Misc. Fault handlers / Page Fault Handlers
+
+1. VFS Layer : block device cache
+	abstracts actual implementation of file system drivers .
+	VFS mount points maintain
+		File system drivers
+			- Algorithms for block eviction : File system drivers callback handlers 
+		Block I/O layer:
+			- Provides block i/o scheduling algorithm. e.g. readAhead algorithm
+
+Block Device Drivers: Random I/O					e.g. RAM, Storage device.
+Char Device Drivers : Sequential/Stream I/O 	e.g. mouse, keyboard, audio.
+
+How to locate a inode : File System driver knows.
+		- Populating inode cache.
+		- tell VFS layer get me Super Block block-0
+e.g. /dev
+		com-1 , com-2 char Device driver /
+		USB : Universal Serial bus
+		neither : Port doesnt decide, but the device connnected to it.
+		If mouse is present the it will call char device drivers.
+		If HDD, Pendrive is connected.
+
+		Platform and bus drivers.
+		no /dev/usb will be present.
+		USB, PCI, Serial is all bus drivers.
+		ethernet card 
+		there is no direct communication, but we sockets.
+		bind it to address.
+
+In Linux all device path is seen as from Block Device driver.		
+But how User Space database engine sees raw data from kernel without cache.
+
+Open(O_DIRECT )
+File system I/O can only be happen on Block I/O device.
+
+In other OS, Oracle needs to read via char device driver, and keep it in memory, do back and forth synching.
+mmapable raw disk
+When we write a file, it will written to disk immediately, there is no synching required.
+For every write, if there is disk i/o, its expensive, but if cache layer is written at user space, then it will be very useful.
+		
+		
+Nvidia's Video drivers are character device driver.
+But we write frame on video card and any frame can be dispayed at random.		
+mmap system call is used.		
+		
+memory backed device which is exposed as char device.
+==========================================================================================
+/proc/pid(2065)/maps
+text : R X
+heap, data , dss : RW
+stack
+RO data "hello world" string literal char *msg = "hello world"  -> will cause page fault.
+RW data char msg[] = "hello world"
+ 
+abstraction of process's virtual address map.		
+sac@ubuntu:/dev/char$ ps ax | grep a.out
+ 4717 ?        R    891:43 /home/sac/Desktop/sac-algorithm/RB_TREE/a.out
+12584 pts/0    S+     0:00 ./a.out
+sac@ubuntu:/dev/char$ cat /proc/12584/maps
+00445000-00460000 r-xp 00000000 08:01 1048691    /lib/ld-2.11.1.so
+00460000-00461000 r--p 0001a000 08:01 1048691    /lib/ld-2.11.1.so
+00461000-00462000 rw-p 0001b000 08:01 1048691    /lib/ld-2.11.1.so
+00aa6000-00aa7000 r-xp 00000000 00:00 0          [vdso]
+00db4000-00f07000 r-xp 00000000 08:01 1053087    /lib/tls/i686/cmov/libc-2.11.1.so
+00f07000-00f08000 ---p 00153000 08:01 1053087    /lib/tls/i686/cmov/libc-2.11.1.so
+00f08000-00f0a000 r--p 00153000 08:01 1053087    /lib/tls/i686/cmov/libc-2.11.1.so
+00f0a000-00f0b000 rw-p 00155000 08:01 1053087    /lib/tls/i686/cmov/libc-2.11.1.so
+00f0b000-00f0e000 rw-p 00000000 00:00 0 
+08048000-08049000 r-xp 00000000 08:01 1057524    /home/sac/Desktop/sac-algorithm/basic/a.out
+08049000-0804a000 r--p 00000000 08:01 1057524    /home/sac/Desktop/sac-algorithm/basic/a.out
+0804a000-0804b000 rw-p 00001000 08:01 1057524    /home/sac/Desktop/sac-algorithm/basic/a.out
+b7740000-b7741000 rw-p 00000000 00:00 0 
+b774d000-b7751000 rw-p 00000000 00:00 0 
+bfc9f000-bfcb4000 rw-p 00000000 00:00 0          [stack]
+
+fast path : reduces user to kernel mode overhead
+vvar
+vdso 		
+		
+What are libraries required for ./hello to run
+Loaded dependency:
+sac@ubuntu:~/Desktop/sac-algorithm/basic$ ldd ./a.out 
+					linux-gate.so.1 =>  (0x004d5000)			no file mapped, depends on shared libraries, that provides syscall functions		gateway to heaven
+					libc.so.6 => /lib/tls/i686/cmov/libc.so.6 (0x00612000)
+Loader: 		/lib/ld-linux.so.2 (0x00265000)	
+		
+C programs doesnot start with main()		
+	-> compile a c program, linker will add a loader stub
+	-> C stub will figure out how to load ld-lib/ld-linux.so.2
+		
+mmap :		2 ways
+	1. fd , we allocate buffer, read syscall copy overwrite
+			whole 1 mb is read
+	2. mmap with fd into my virtual address space upto this much size.
+		the file is mapped into virtual address of a process and read it dynamically on demand using page fault.
+			1 mb is set aside in virtual address space and only page faulted block is read.
+
+If 2 process tries to use same file(e.g. shared libraries), it will in one physical location and mapped into both processes address space.
+when one process write onto this shared file, it will do copy on write.
+============================================================			
+Audio and visual drivers
+
+Audio
+To record a voice:	
+	cp /dev/audio myaudio2.raw
+
+To play recording
+	cp myaudio2.raw /dev/audio			
+			
+Mice:
+cat /dev/input/event5		
+		
+****************************************************************			
+				Directory : 
+****************************************************************
+src: /usr/local/src/linux-4.3.3
+build: /usr/local/build/linux-4.3.3-vbox/		(drivers/net/ethernet/intel/e1000/e1000.o)
+			All built in file are in single file vmliux.o	ELF relocatable
+
+LKM : /lib/module/4.3.3-vbox/kernel/				(drivers/net/ethernet/intel/e1000/e1000.ko)			
+			From /src location only config is build which are selected to produce *.ko files
+
+			
+=========================================================================			
+1. Loadable kernel binary.
+build: /usr/local/build/linux-4.3.3-vbox/		(drivers/net/ethernet/intel/e1000/e1000.ko)
+built-in.o	: built in inside kernel binary,	only header	= 8 bytes
+e1000.ko	: loadable kernel module, dynamically loaded
+			
+2. kernel built-in binary									(drivers/net/ethernet/amd/built-in.o )
+	/usr/local/build/linux-4.3.3-vbox/vmlinux.o		
+	
+	kernel bootable image
+		/usr/local/build/linux-4.3.3-vbox/arch/x86/boot/bzImage 	(bootable zipped image)
+		This above file is copied in /boot/vmliz-4.3.3-vbox
+	
+	Some boot loader understand ELF boot image
+	Some uboot uImage format : universal boot loader	=>	uboot header + vmliux.o 			
+=========================================================================
+
+****************************************************
+	kernel debugging & snapshot analytics using gdb
+****************************************************
+/boot/vmlinux-4.3.3-vbox is a ELF binary for  kernel debugging
+		not present in production environment
+		
+gdb /boot/vmlinux-4.3.3-vbox /proc/kcore
+(gdb)	p jiffies
+$1 = value-1
+		reload core again jiffie value get update at every time tick
+(gdb) core /proc/kcore
+(gdb)	p jiffies
+$2 = value-2
+(gdb)list do_sys_open
+	code for do_sys_open listed here
+
+##############################################################################################			
+##############################################################################################			
+##############################################################################################
+
+
+									DAY-2
+##############################################################################################			
+##############################################################################################			
+			
+512 byte 	Boot Sector
+64 byte	Setup code
+65 byte 	compressed *.bz Image		
+			
+In production, we cant locate the kernel
+File system & kernel is place at different location on ROM.			
+
+OS always boots as if it is 8086 machine, 16 bit data mode, 20 bit address bus
+20 bit address means we can only access, 1 MB of data.
+			
+Initially Power on self test for all devices will be performed.
+Initial program loader : responsible for identifying first bootable drive.	(e.g. boot from HDD, CD-ROM etc.)
+
+It will read the 1st sector = 512 Bytes into particular location of RAM & will check boot signature.
+It will call the boot program.
+
+Bootable Hard drive will contain a bootstrap loader.
+In Linux, this bootstrap loader will be replaced with real loader grub, lilo.
+
+This 512 bytes will read remaining kernel from sectors where kernel is located in hard drive & will boot the kernel.	
+That is a job of BootLoader
+
+File system in dongle is RAM based FS : init RAM FS
+No /boot directory is present.
+	cat /proc/version
+	cat /proc/cpuinfo
+
+Dir = linux/	
+
+*Maintainer of file:-
+		linux/Documentation/CodingStyle/
+										/SubmittingPatches
+										/SubmittingChecklist
+										/MAINTAINERS
+										/README
+scripts/get_maintainer.pl -f init/main.c	
+	
+git patch-set	
+
+Dont's
+1. no new system calls to be added, because glibc will fail as they are tightly coupled with syscall numbers.		
+2. no new ioctls in unix	: i/o controller, voulme increase/decrease , change bit rate, rewind, fast-forward etc .
+		-> for many audio devices, many different ioctls required.
+				so user line developers find it  difficult to manage multiple ioctls.
+		-> Dont use ioctls, instead linux uses multiple device path
+			separate out the data (/dev/audio) & control (/dev/mixer) path, so from software perspective synch is achieved
+			
+			ioctls is only supported in C language,
+			device path use become language agnostics.
+			
+			ioctls used to find capability of a device, getting statistics
+			in linux /proc does that.
+#############################################################################################
+/proc
+	- abstracts core kernel features & process sub-system
+		1. Memory MGMT,
+		2. Process Subsystem
+		3. INTR Subsystem
+		
+	- unix back ported /proc from ATT plan9
+	- USL added in unix have ioctls glutch & 	system 5 IPC	->	number	
+																		POSIX IPC		->	fd
+	- USL implemented future OS Plan-9
+			1992, micro kernel distributed OS
+			plan 9 on different machine connected on network magically works  together.
+			Zero config networking -> 
+
+			1. No TCP/IP support , no internet disbanded everything available today.
+			2. Drop concept of File System & instead use namespaces & containers
+			3. Devices are no longer files on Disk
+				/dev	: it is pseudo file system
+				
+/proc is the best implementation provided by linux.
+application binary interface
+	1. It is not about process, many kernel data structers configuration, statistic exposed by /proc
+		/proc/cpuinfo
+		/proc/interrupts	: hardware interrupts 
+			: we can set affinity to CPU 
+			configurability of kernel via /proc
+			
+		solution : in user space	
+				$ cat /proc/irq/1/smp_affinity
+				$ F 			(1111 : deliver to any CPU)
+				
+				$ echo 2 > /proc/irq/1/smp_affinity	(fliped the switch on kernel from user space) CPU-1
+				$ watch grep 1: proc/interrupts
+						>> every 2 seconds executes and prints next command output
+
+	2. In other unix, sysctl syscall is used to configure kernel variable	
+---------------------------------------------------------------
+
+
+		arch/
+			- arch specific code memory management , low level interrupt handling , setup routine
+		arch/x86/boot/
+			- contains boot code
+				linux is build as   & piggibacked with setup code in /boot
+			- in /arch/mips 
+					no arch specific code present for boot setup
+					mips uses uboot, find entry point from ELF binary 
+------------------------------------------------------------------------------------
+src: /usr/local/src/linux-4.3.3
+Device tree 
+CPU manufactures like modern processor architecture =  AR M, MIPs, Qualcomm, Raspberry Pi will create following config file about 
+	CPU dont know how many peripherals connected to it.	
+	CPU only bootstrap the kernel.
+	Kernel should be notified telling that you can find network controller here, 2 cores on system with frequency, different MMIO regions/registers
+	machine tage / atags file : DTS in linux	
+					# CPU, 
+					peripheral device info etc.
+	
+	Raspberry Pi chip:
+	BootLoader load following binary
+		>> less arch/mips/boot/dts/brcm/bcm6328.dtsi
+	kernel type cast it to machine structure/configuration.	
+-----------------------------------------------------------------------------------------
+
+src: /usr/local/src/linux-4.3.3  
+					
+		/block 
+			- block i/o layer will contain scheduling algorithm,  elevatory algorithm for pendrive, HDD  
+
+		/crypto 
+			- crypto api kernel uses internally encrypted file system , IPSec API, hashing algo, crypto encapsulation, 2way encryption algorithm
+			Open crypto algo, no RSA algo present
+		
+		/drivers/block	
+		/drivers/char	
+		/drivers/net :	below layer - 3 drivers		layer2, slip, 
+	
+		/firmware : hexdump
+			- blobs provided by vendors
+			- driver are hardcoded with firmware drivers
+			- network card will have coding routine embedded in firmware.
+				
+			encryption routine will get called asynchronously in firmware hex code that will call the driver function.
+			when we recompile the driver firmware needs to be burn again.
+			but here the card physical firmware is disabled and kernel firmware is memory mapped into I/O region.
+		
+			dont map the firmware in virtual address, kernel have memory mapped i/o copy.
+			graphics codes, camera codecs
+			it violates GPL v3
+	
+		Problem:
+				Some driver manufactures facebook, google dont share code.
+				They use binary and kernel crashes
+				Nvidia made 2-tier call to kernel functions using blobs
+				Open source NU way driver are good  compared to binary blobs.
+				
+				
+		/fs 
+			-	 all the functions below VFS layer
+			- 	/fs/ext2/super.c 
+
+		/include/linux	(all good .h file)
+			- kernel.h
+			- sched.h
+					- task_struct
+		
+		/init : kernel boot up routine
+			- initRamFs
+					
+		/ipc : 
+			- system 5 IPC
+			- syscall.c
+	
+		/kernel: core kernel : Process mgmt, schedule
+			- fork.c
+			- signal handling (kill)
+			
+		/kernel/sched/core.c
+					- __schedule
+						(wakeup dont really cause entry into schedule, they just add task in run queue, set TIF_NEED_SCHEDULE
+			
+				spin_lock is arch neutral : use this
+				_spin_lock_raw : arch dependent
+
+		/kernel/irq/
+		/kernel/locking : mutex, spinlock
+
+		/mm : memory mgmt	posix thread implementation
+			cost of acquiring lock is minimal
+			in user space use lock free algorithm
+			If user use pThread mutex , it will have same granularity as spin lock
+				mcs algo : fast , slow 	, mid 
+			
+			in kernel no need of lock on every internal door
+			acquire semaphore lock on fast path is costly : 700 instruction
+			lock must be cheaper than critical section
+			spin lock is used mainly for multi - core arch 
+				- Busy wait : one cpu will spin, other will wait
+					2 people, magazine , optimization for few pages	: slow locking
+					
+			for heavy memory operation : 64 KB buffer 
+				- dont use spin lock with 1 KB chunk
+				
+				User space : MCS algorithm 
+					spin for 20 cycles and then go back and sleep
+	
+		part-1
+		/mm / algorithm
+			-	slab / buddy based algorithm
+			- find first free page arch independent
+		
+		part-2 
+			- arch dependent 
+			- manupulating page table
+			- it is in arch/x86/mm	
+			
+		/net 	(above layer 2)
+			-	in kernel network stack
+			-  TCP/IP implementation : /net/ipv4
+
+		/samples
+			- new kernel features
+			- how to use kprobe
+			- perf tool
+			
+		/scripts/
+			- to make implanted user level header synch with kernel/
+			- /usr/include/linux
+		
+		/security 
+		/security/selinux			
+			-  read access permissions
+			- multi level security
+			- lsm, linux security module
+				system call audit
+				this is callback handlers to check for any systemCall, permissions are present are not 
+
+		/virt
+			- XEN / KVM
+			- tunnel virtual interfaces
+			- ring -1, hypervisor mode
+			para-virtualization
+				- Qemu : hypervisor guest kernel
+				- guest os in user mode
+
+----------------------------------------------------
+
+Kernel main code
+	memory mgmt
+	trap
+	scheduler data structers
+	scheduling disabled
+	Hardware INTR init()
+	only timer tick registered
+	softwaIRQ init()
+	console()
+	// till here nothing is displayed on screen
+	rest_init	: create 1st process/thread/task in kernel mode
+
+512 byte 	Boot Sector
+64 byte	Setup code
+65 byte 	compressed *.bz Image		
+
+1. Setup code
+2. Entry point of kernel
+
+Boot sector
+ls arch/x86/boot/header.S
+
+1. Setup code
+		/arch/x86/boot/main.c
+-----void main(void){
+			// copy boot header into zero page
+			copy_boot_params();
+			
+			initialize consode, heap (RAM)
+			
+			caps lock is : edge high will crash the system while bootup
+			
+			16bit mode/
+			go_to_protected_mode
+		}
+		
+-----go_to_protected_mode(){	
+				setup_ldt();
+				setup_gdt();
+				protected_mode_jump(boot_params.hdr.code32_start)
+		}
+grub will skip setup path and will go to step 2
+
+2. entry point of kernel	(after setup code)
+			vi init/main.c
+			
+			//Initializing the core kernel subsystems
+			// peripheral will happen later
+------	void start_kernel(void)
+			{
+					1. Intr handling subsystem
+					2. Memory management subsystem
+					3. Scheduling
+
+				1. first task_struct = init_task is initialize here 
+					init_task = pid 0 
+					Swapper
+					statically created
+
+-------local_irq_disable();	// cli : because Intr vector table is not ready;
+					
+					/* Activate first processor */
+-------boot_cpu_init()
+							//intel specific feature
+							//only one cpu is powered on : boot CPU-0 core-0
+							Asymmetric multi processing (ASMP)
+							//boot cpu is different
+							octa -core 
+							4 high frequency core - computation	
+							4 low frequency core	- peripherals
+						
+-------page_address_init();
+					/*		2-D vector
+							array of linked-list of 4KB each mapped to physical address itself
+							MMU is not functional, are CPU generated address are physical addr.
+					*/
+						
+-------setup_arch();
+					{
+								MMU is initialized
+								DTS also mapped here for peripherals attached.
+								page table setup here.
+								swapper_pg_dir : kernel phy addr page.
+								KERNEL_PGD_BOUNDARY
+							
+-------load_cr3(swapper_pg_dir);
+								//After this line all addr generated will be virtual addr.
+								// Also TLB flush required when context switch from one process to another process
+							
+									!!!!	CR3 is not loaded in User to kernel mode
+									This is called LAZY TLB handling
+									BIGGEST SELLING POINT			
+-------__flash_tlb_all();
+							
+							// no page fault in kernel
+							double fault in kernel, mean crashed kernel
+					}
+					
+					Upper 1 GB they share the same page table of kernel
+				}
+
+				/*
+					1989 : intel 386 
+						RAM = 4MB on server
+						
+					Intel pentium processor
+						32 bit processor with 36 bit address line
+							1.  Physical Memory = can generate address upto 64 GB of
+							2.  Virtual Address limit = 32-bit = 4GB
+							
+						in virtual some amount of memory will go to kernel out of 4GB
+
+					64 bit architecture
+						- address space
+						- performance degradation happen
+						- larger word bits, more transaction on CPU
+						- Linux kernel uses on 48 bit address space = 2^48 bit address = 1.6 Hexabyte physical memory
+					
+					
+					lower 16 Mb is reserved for ACPI (advance control power interface)
+					Kernel always loads above 16 MBs
+					
+					Swapper is mapped serially with physical memory 
+					
+					c000 to 1000	
+					
+					Question : How to access physical memory from User space ?
+						
+					Answer: Sudo device file 
+						/dev/mem represents system RAM
+							will use mmap will take fd or (not useful too big memory)
+							we can seek to this file directly.
+						
+						Block I/O will always go via block I/O layer   Scheduling.
+						Char devices benefits from no cache.
+						
+						kernel doesnot do graphics mgmt.
+						xserver is used, vland is nowdays.	
+						
+						Kernel use 2MB page frame, less records entries
+				*/
+				
+				
+-------build_all_zonelists(NULL,NULL);
+						/*
+							ZONE_DMA 			: 	lower 16 MB
+							ZONE_NORMAL 		: 	till 887 MB, with 2MB page size	
+							ZONE_HIGHMEM 	: 	after 1GB all above
+						*/
+
+						Kernel's VA Space is 1:1 map to physical memory statically allocated page table.
+						if kernel wants to access above 1Gb, entry needs to be removed using kmap, remap_page
+					
+						Get me a page from which zone : param needed to be provided.
+						
+-------page_alloc_init();		physically contiguous pages
+						Used in all Unixes
+						Free List : free area is an free list
+						
+						Buddy list Allocator : optimization for physically
+						Lowest level allocator
+						contiguous in power of 2.
+						order-0 : 1 page
+						order-3 : 8 page contiguous in memory
+
+						Max order =11 (0-10)
+						Last record = 2^10 = 1024 KB 
+						
+						2^0 = 4KB is allocated at once 
+						Next page request for 2^2  = 1 page  will be served from 5th page onwards.
+						
+						Entry for 2^0 is removed from all orders.
+						Logical Page Size does not match with physical frame size.
+						offset address in physical memory.
+
+-------trap_init()	
+				/arch/x86/kernel/trap.c
+					- various trap handlers are initialized 
+					- system call handlers are also registered
+						set_system_trap_gate( 	I32_SYSCALL_VECTOR
+						syscall as array of function pointers in table SYS_CALL_TABLE	
+						
+						SYS_CALL_TABLE[0] = kernel_function_0()
+						SYS_CALL_TABLE[1]
+						SYS_CALL_TABLE[2]
+						SYS_CALL_TABLE[3]
+						
+						open("abc.txt", O_RDONLY);
+						syscall -> number associater with it
+						
+						move all arguments to ax, bx, cx registers
+						Instruction SYSENTER will cause syscall trap (old 386 uses 0x80 for kernel mode change).
+						
+						Max arguments function : 
+							mmap (6 arguments)
+						
+						Kernel copies data into its own memory and then re-validate it from user to kernel space.
+						
+-------mm_init()							
+					- top level mgmt slab allocator code
+					
+-------sched_init()						
+					- allocates Run Queues data structers & returns
+					- RunQueues are sched_entity 's 		
+						
+					per CPU 3 RunQueues
+							1. CFS RQ	: normal processes & threads
+								
+							2. RunTime RQ 
+								I scheduling policy of a process is changed to any Real Time Policy FIFO or RR
+								2-D array [0-99] 			0-low priority 
+								
+							3. Deadline RQ
+									- process must be schedule within this dealine
+									- it will get priority over everyone when deadline is approached
+						
+-------preempt_disable()
+							- whenever scheduling is called, variable is check "__preempt_count" per cpu variable (32bit variable).
+							if value ==0, then sched() will run.
+							- loader will create the copy for each cpu.
+						
+						preempt_disable() * 4 times, then preempt_enable() * 4 should be called 4 times nesting.
+						
+						whenver Hardware Interrupt is running , scheduler should not do anything.
+						HARD_IRQ_PATH : HARD_interrupt is  being called.
+						
+						HARDIRQ_MASK bit is set to avoid timer->scheuler() call.
+						
+						PREEMPT_MASK 	0X0000 00FF
+						SOFTIRQ_MASRK 	0X0000 FF00
+						HARDIRQ_MASK		0X000F 0000
+						NMI_MASK				0X0010 0000
+					PREEMPT_ACTIVE		0X0020 0000
+		PREEMPT_NEED_RESHED		0X8000 0000
+						
+						
+						Initialize the Interrupt vector table.
+-------early_irq_init()
+-------init_IRQ()						
+						
+						Progammale Interrupt Controller (PIC)
+							- Demux for INTR pin (0-16)
+							- 2 registers : status & mask registers
+						
+						disable_irq (number=7)	: disable IRQ-7
+						enable_irq (number=7)	: enable IRQ-7			
+					
+					whenever the Hardware Interrupt Pin Goes high,
+					PC wil move to special Address Location IDT (start of IVT)	
+					Offset added and jump to that function for INTR handler function handlers			
+																
+					all above function pointers will call 
+-------do_irq() platform independent function
+							- will read PIC manually
+							- uses IRQ descriptor vector[10] : linked list of IRQ action
+							-  IRQ 0 -> *func_ptr0	-> IRQ action-1-> IRQ action-2
+								IRQ 1 -> *func_ptr1 -> 
+								IRQ 2 -> *func_ptr2
+							
+					Ques.	Why we need more than one INTR handler for a single device ?
+						0 = not my INTR, 1= I will handle INTR
+							- IRQ-5 : shared Network Card or Sound Card	
+								- calls sound card handlers and also network card handlers
+								- network card raises interrupt status register.
+								- handlers goes and read Interrupt status registers
+								
+							- spurious interrupt : line mask of bad hardware bug	
+							 if more than one spurious intr within jiffies , disable that intr mask.
+							 
+-------init_IRQ()
+						Initialize IRQ descriptor table.			
+					
+						INTR Storm :
+								- for network card status register , INTR mask register
+								- on arrival of first packet,  Mask is set.
+								- INTR_handler will schedule K_THREAD or bottom_up Routine with lower priority.
+							    - in exit path it will go to polling mode.
+							 
+							e.g. On call Support or server mgmt issue.
+							
+									Phone call,  INTR
+									Customer-1 called
+										1. Keep him on Line
+										2. Take minimal info, hang up the phone, do customer-1 works 
+							 
+									Customer-2 called
+										Put customer-2 in queue.
+										
+									This is Bottom up processing for polling.
+									low priority than hardware INTR, more priority than process
+							
+							Top-Up ;
+								Collect and Acknowledge
+									
+-------tick_init()
+							sleep()
+							Busy Timer
+									function in kernel takes the current process out of run queue and put it in a loop.
+									Busy_loop lets say will run upto 10 micro sec and then it will put this process on run queue.
+							 
+							 nanosleep
+							e.g. for 10 mins sleep, we will setup an alarm
+								but for 10 sec sleep, we will keep looking at neede in loop ideally.
+								busy_wait.
+								
+							increments global variable jiffies variable.
+								- how many jiffies for function to run.
+								- revolution 100-1000 Hz
+								- In mobile, 1000Hz keep for better response
+								- CPU disturb more more frequently, cause scheduler is INTR
+									 
+							for server class frequency = 100 Hz, for more throughPut		 
+							 
+							TickLess Scheduling
+								if Run queus is empty, every 1000 sec scheduler will kick in unnecessarily.
+							 turn off timer chip, dont raise any timer intr.
+
+						/proc/interrupt
+							LOC : local timer interrupt
+							
+						TSC : time stamp counter register is updated with processor speed e.g. 1GHz	
+						
+						pthread_attr_setaffinity_np : non portable
+							in other OS, we cant keep 1st thread on 1st CPU and 2nd thread on 2nd CPU;
+							 
+-------console_init()		: do_nothing()			
+-------pr_notice()		
+-------pr_info()
+						- similar to printf() is library wrapper on write system call : std output fd = terminal
+
+						strace ./hello
+					pid 3239 
+					ls -l /proc/3239/fd
+							0-> /dev/pts/3		(current opened terminal)
+							1-> /dev/pts/3	
+							2-> /dev/pts/3
+							
+					If terminal is not ready then, even no driver is enabled		
+					statically allocated kernel lock buffer : screen		
+					printk in kernel space is similar to sprintf in user space
+					
+					keep looking continuously on kernel.log and print printk statement data on console asynchronously.
+					
+					Only for Intel Arch:
+					video RAM is lower 16MB in physical space.
+					Text area.
+					whatever is written here, it will appear on text mode console.
+					
+					
+------calibrate_delay() : busy_wait 						
+						- how many iterations of for loop to calculate on jiffies or 1 micro sec
+							10000 iteration (end - start)
+					
+						- usleep is wrapper on nano() system call					
+
+
+*** Last function in start_kernel --------------->>>>>>>>>>>>>>>..
+						
+-------rest_init()	[IMP kernel_init() ]
+			$ps ax | less 
+PID=1, 	init
+PID =2 	[kthread.d]		everything in square thread are kthread []				
+						- create 1st process/thread/task in kernel mode
+						- PC = kernel_init()
+								(scroll down for explanation)
+						
+****************************************************************************************************							
+						
+**********PID=1 init
+							- grand ripper of all user land processes
+							- kill all orphan child thread
+-------wait_pid() loop blocking call
+							-	as soon as some process exits, this will unblock
+							- it morphed itself into user space thread
+****************************************************************************************************														
+
+**********PID =2 kthread.d
+						- boss of all thread
+-------kthread.join()
+						- waiting for all other kthread to die
+								
+						-PID =2 	[kthread.d]		
+						everything in square thread are kthread []		
+						How to identify trojan of kthread?
+							$ ps -aeo pid, ppid,cmd | less
+							All kthread have parent process ID set to PPID = 2
+****************************************************************************************************							
+							
+		PROCESS vs THREAD
+				1. Process have separate Virtual memory 
+						Threads dont have separate virtual memory.
+****************************************************************************************************						
+
+					$ ps ax 
+						anything with SL is a multi threaded program
+					e.g. pid 1950 nm-applet
+					$	cat /proc/1950/task		
+					/1950 	/1956	/1958
+					
+					In kernel space its PID 
+					In User space its TID
+					
+					1. Process-ID called in USER-SPACE
+						= Thread Group ID in KERNEL-SPACE
+						
+					2. Thread ID in USER-SPACE	
+						= Process ID in KERNEL-SPACE
+						
+					Every task_struct is mapped to Unique PID
+						If 10 threads belongs to Process, PID will be unique because of PID hashmap.
+						
+					In task_struct, one more field TGID 
+						So 10 threads will have common TGID.
+						
+				//wake up scheduler			
+				// decrement the preempt count and call schedule()		
+-------schedule_preempt_disable()
+						
+					//Just to decrement the count 		
+					// & after that explicitly / manually call schedule()
+-------schedule_preempt_enable_no_reschedule						
+-------schedule()		
+			// here control will not return here, until run-queue becomes empty
+			// context switch to another task_struct on run-queue	
+
+-------preempt_disable()
+				- because run-queue is empty
+							
+-------cpu_startup_entry(CPUHP_ONLINE)
+				- put cpu in idle state			
+-------cpu_idle_loop()
+				- turns off timer tick
+				- while( ! need_resched)
+						turn off cpu 
+-------cpu_is_offline(smp_processor_id())	
+						
+						
+				1. Now cpu will be wake up by HARD_interrupt, it will set 	'need_resched' &
+					call schedule()
+-------schedule_preempt_disable()
+			
+				2. Above is idle task, nothing on run-queue, this is not schedule by scheduler
+					No ps listing
+					*current  = 0 (idle_task) init =0
+					
+					CURRENT will point to whichever task is currently running, 
+						if nothing is running it will point to pid(init) = 0 - SWAPPER 	
+					
+						
+-------kernel_init()
+-------kernel_init_freeable() 
+					- 80% boot time consumed here
+-------wait_for_completion(&kthread.d_done)
+-------smp_prepare_cpus(setup_max_cpus)
+							- prepare other cpu IPI, quick path inter_connects
+							- once other cores woke up by turning on timer chip of cores , simply call schedule()
+					
+				1. Scheduler will check which core calls schedule()
+				2. If core-1 called, look at core-1 run-queue (per cpu run-queue)
+
+/*
+* Ok, the machine is now initialized. None of the devices
+* have been touched yet, but the CPU subsystem is up and
+* running, and memory and process management works.
+* Now we can finally start doing some real work..
+*/
+-------do_basic_setup()						
+				- initialize device drivers sub-system.
+				- intialize drivers, bus, class, firmware,hypervisor init data structure		
+
+-------do_init_calls		(80% time consumed here )				
+				- array of function pointer 
+					*initcall_level []
+-------do_one_init_call()					
+					
+788 extern initcall_t __initcall_start[];
+789 extern initcall_t __initcall0_start[];
+790 extern initcall_t __initcall1_start[];
+791 extern initcall_t __initcall2_start[];
+792 extern initcall_t __initcall3_start[];
+793 extern initcall_t __initcall4_start[];
+794 extern initcall_t __initcall5_start[];
+795 extern initcall_t __initcall6_start[];
+796 extern initcall_t __initcall7_start[];
+797 extern initcall_t __initcall_end[];
+798 
+799 static initcall_t *initcall_levels[] __initdata = {
+800         __initcall0_start,
+801         __initcall1_start,
+802         __initcall2_start,
+803         __initcall3_start,
+804         __initcall4_start,
+805         __initcall5_start,
+806         __initcall6_start,
+807         __initcall7_start,
+808         __initcall_end,
+809 };
+810 
+811 /* Keep these in sync with initcalls in include/linux/init.h */
+812 static char *initcall_level_names[] __initdata = {
+813         "early",
+814         "core",
+815         "postcore",
+816         "arch",
+817         "subsys",
+818         "fs",
+819         "device",
+820         "late",
+821 };
+822 	
+					
+					1. Register a driver : 
+							module_init()  will place a function in one of above entrie-6 
+							device_init() array 
+					2. All drivers built into kernel binary, not LKM (Loadable kernel module)		
+					3. sys_open()	fd = 0
+						sys_dup(0)	fd = 1
+						sys_dup(0)	fd =2 
+						
+						check for file /init in file system
+							If not found, prepare namespace responsible for mounting the file system, real block device.
+							This is for initram_fs
+							
+					4. /dev/console is mounted before /root 
+					5. now kernel_init_freeable EXITs
+
+**************************************************************************************************************					
+**************************************************************************************************************					
+								KERNEL is READY	!!! 
+**************************************************************************************************************					
+**************************************************************************************************************					
+
+-------free_init_mem
+					1. free large chunk of kernel memory which is not required
+						e.g. start_kernel
+						many functions are prefixed with __init macro
+						hash define to compiler directory.
+							.init.text section -- free this section
+							
+					2. /root file system mounted by now, if it is there, 
+						it will call execve() call
+						overlay current process with new memory map
+						PC made point to entry point
+
+						Check /sbin/init
+									/etc/init
+									/bin/init
+									/bin/sh
+								
+##############################################################################################			
+##############################################################################################			
+																			DAY-3
+##############################################################################################			
+##############################################################################################			
+
+
+Demand Paging
+Malloc for virtual memory in user space
+	- FD 
+	- no FD (MAP_ANONYMOUS)
+								
+Memory Management
+			Page Table Traversal
+			Slab Allocator
+
+task_struct
+{
+	struct mm_struct *mm;
+}
+
+struct mm_struct
+{
+	struct vm_area_struct *mmap;
+	
+	unsigned long start_stack,		(process stack)	end above mmap_base	MAX(stack_size) = 8 MB
+							
+							mmap_base,	(process mmap)	shared library grows downwards
+
+							brk,					(heap)	
+							start_brk,
+							
+							end_data,		(data)
+							start_data,
+
+							end_code,		(text/code)
+							start_data	
+}
+
+
+	1. virtual memory area (vma)	
+			- represents each segment as a process
+			- text 	:	 vma linked-list organised as RB TREE
+			- data	: 	vma
+			- heap : 	vma
+			- stack : 	vma
+
+			- everytime a mmap() system call in user space, a new vma is created.
+
+	VMA 	/proc : linked-list of all vma arranged in RB tree 
+			- protection bits (R, W, X)
+			- fd (backed by file on disk)
+			
+	e.g. ./hello
+		ps ax  3533
+		
+		/proc/3533/maps
+				- each record is a VMA
+				
+	abstraction of process's virtual address map.		
+sac@ubuntu:/dev/char$ ps ax | grep a.out
+ 4717 ?        R    891:43 /home/sac/Desktop/sac-algorithm/RB_TREE/a.out
+12584 pts/0    S+     0:00 ./a.out
+sac@ubuntu:/dev/char$ cat /proc/12584/maps
+00445000-00460000 r-xp 00000000 08:01 1048691    /lib/ld-2.11.1.so
+00460000-00461000 r--p 0001a000 08:01 1048691    /lib/ld-2.11.1.so
+00461000-00462000 rw-p 0001b000 08:01 1048691    /lib/ld-2.11.1.so
+00aa6000-00aa7000 r-xp 00000000 00:00 0          [vdso]
+00db4000-00f07000 r-xp 00000000 08:01 1053087    /lib/tls/i686/cmov/libc-2.11.1.so
+00f07000-00f08000 ---p 00153000 08:01 1053087    /lib/tls/i686/cmov/libc-2.11.1.so
+00f08000-00f0a000 r--p 00153000 08:01 1053087    /lib/tls/i686/cmov/libc-2.11.1.so
+00f0a000-00f0b000 rw-p 00155000 08:01 1053087    /lib/tls/i686/cmov/libc-2.11.1.so
+00f0b000-00f0e000 rw-p 00000000 00:00 0 
+08048000-08049000 r-xp 00000000 08:01 1057524    /home/sac/Desktop/sac-algorithm/basic/a.out
+08049000-0804a000 r--p 00000000 08:01 1057524    /home/sac/Desktop/sac-algorithm/basic/a.out
+0804a000-0804b000 rw-p 00001000 08:01 1057524    /home/sac/Desktop/sac-algorithm/basic/a.out
+b7740000-b7741000 rw-p 00000000 00:00 0 
+b774d000-b7751000 rw-p 00000000 00:00 0 
+bfc9f000-bfcb4000 rw-p 00000000 00:00 0          [stack]
+		
+		
+Malloc for virtual memory in user space		
+			1. mmap grows downwards
+			Stack 			0xBFF***			
+			mmap space
+					|
+					
+			2. In user space, 
+				malloc() below 128KB, brk is used
+				Above 128 KB, malloc() use mmap() system call.				
+				mmap() with fd = -1 called as anonymous memory map
+				
+			3. In general, for page fault, disk I/O will occur and content read into page and page is mapped in page table.
+
+			4. mmap a file , virtual start-end address	
+					do not have any physical page associated.
+					
+			5. Page fault handler (PFH) checks valid address from range of any of the VMA's boundary
+			6. PFH will check does VMA is backed by FD
+					- If yes, go and access FD's fault handlers / file system handlers.
+					- fault handlers provided with file system driver
+					- FH will decide what location needs to be read from disk 
+					- read a particular physical pa and make an entry in Page table
+
+			7. If not backed by file descriptor, 
+				mmap(MAP_ANONYMOUS)
+				& set fd = -1 
+				Create a memory map not backed by FD.
+				This is what malloc does for large chunk of memory
+				
+				malloc(1MB) wrapper on mmap(MAP_ANONYMOUS) 
+					not backed by FD
+
+				demand paging		
+				Virtual memory area is created and set FD = NULL in kernel space.	
+				PFH will then allocate a physical page by getFreePage()
+				and make an entry in page table. 
+				No disk I/O incurred.
+				
+				This is how demand paging works for allocating large chunks of memory.
+				malloc maintains free list in user space for mmap memory.  	
+		mm_struct				
+		1. Text 
+		2. Data : RO, RW, 
+			BSS 	- Huge gap (end_data & start_brk)
+			UnInitialized variables	: all global variable initialized to 0
+
+					char buf[100] ; 						BSS
+					char buf[100] = "'Hello";			RW	DATA
+					char *buf	= "HELLO";				RO	DATA
+		3. guard page with no R, W, X permissions before spillover to other segment				
+						
+			e.g.	Samples/05_userspace/malloc_test.c	
+					strace ./malloc_test
+			case-1		32*1024 = 32KB
+					128 KB is allocated for 1st call
+					2nd, 3rd call will keep allocating pointers from this 128KB buffer and 
+					once 128KB is exhausted, then brk() will get called again 2nd time. 	
+					
+					free() memory should be done in LIFO order,
+					99 KB will be free() , 100th still in use.
+					strace is userspace utility , use breakpoint on syscall
+					
+			case-2		if 160*1024 = 160 KB malloc is called 
+					then mmap2(MAP_ANONYMOUS) will be used
+					free() will unmap immediately,
+					unmap
+					
+				free() for brk()		region uses heuristics when to return memory to kernel	
+				free() for mmap() instant release unmap()
+				
+				for every mmap() call new VMA is created and 
+				if memory chunks are small, linked-list will be huge
+				
+		VMA (48 bytes)		
+				How to load a executable binary 2MB in size
+				vma is a linked-list RB Trees sorted on address.
+				
+				/lib/libc.so.6	(start,end)
+				/lib/libreadline.so.2		(start,end)
+				
+				ELF section headers for text, data (start, end)
+				Only Virtual Memory Areas are created mapping to those file in virtual address space.	
+				
+				when mmap system call is created a new node is added in linked-list of VMA's.
+				
+				When execution started PC will fetch 1st address instruction from text section.
+				If the virtual address is not present in page table mapping, no valid page table entry, PF triggers
+				PFH will ideantify which section page fault belongs to - Text segment
+				Text segment mapped to particular offset in file.
+				Read 1 block to satisfy that page in that offset.
+				Programs are demand loading.
+				
+				PFH will go and check which address cause PF in CR2 register.
+				Now check this CR2 address is valid in RB trees of VMA.
+				If node is found in VMA tree/list, check the FD.
+				
+				If FD = NULL, take 1 physical page from buddy list & page table entries is added.
+				mmap & brk will map shared libraries.		
+				
+				Stack, Text , Data segment is created by execve system call().
+				mmap_base number will point to start of vma areas first node in linked list, not a root of tree.
+				
+			task_struct	
+				*vm_file 
+					FD = index of a file descriptor table array[] dynamically growing array 
+					when open a file, tries to find first free slot in table, that slot will point to file structure in kernel structure
+					This structure 
+						- Path of file
+						- flags used 
+						- file seek pointer
+						- file operation (read - corresponding function, write- function-2 mapping implanted by file system driver )
+						- custom fault handler is file is mmap-able
+								we cant mmap everything : PIPES, SOCKETS, TERMINAL, SERIAL DEVICES, TCP, UDP SOCKETS (except raw sockets hack)
+								Question:  What is mmap means ? that mean,
+								Answer : get me 15th elements in SOCKETS before getting all the first 14 elements
+												Anything that supports random I/O , streaming device cant mmaped.	
+												Some device files can be mmaped, that capability is described by this file descriptor
+												if it is mmap-able, then it will have custom fault handler, 
+												whenever there is a PF & it falls into this VMA back by FD, it will call custom FHandler.
+												That fault handler will device driver or File System implementation
+												
+													1. File System driver implementation will find out what file it is , which block is associated with it, wher e the fault was.
+														Read that data block into physical page by co-ordinating with VFS and Disk I/O layer 
+														and that page will be hand over to PFH.	 	
+													
+													2. If 2 process uses same file,
+														in kernel 2 process represents as a data structure task_struct
+														Now execution start , page fault occurs for text/code segment.
+														That physical page in brought into memory.
+														
+														Now, 2nd process start executing, again page fault will occur and 
+														page table entry will map to same physical page in 2 process virtual memory.
+														
+													3. If 1000 bash shell process started, all will map to single text segment in physical memory and no duplication will occur.
+														Text, RO_DATA never duplicates.
+														mmap(MMAP_SHARED)		for shared libraries.
+														
+													4. HEAP & RW_DATA can be replicated.
+														Physical page for RO_DATA & HEAP will have Copy_On_Write bit is enabled.
+														mmap (MMAP_PRIVATE)
+								
+													5. PC : will always have virtual address
+														virtual to physical tranlation is exclusively done by MMU.
+														Memory PROTECTION is guaranteed better.
+														
+													6.	MMU 	- overhead for real time system.
+															- 1st will check TLB
+															- If no TLB, start traversing nested page table.
+																2 level , 3 level lookup, different time it takes.
+															- overhead of time to find virtual to physical address will vary
+																This is not tolerable for HARD-REAL-TIME system.
+																There is no virtual memory , no USER/KERNEL SPACE.
+															 - Benefit is malicious process can not corrupt no other program memory.
+															 - For a process, memory is this structures, it has no idea about physical memory backing it.
+																Process thinks this is the memory that i own.
+																Structure with start and end address that's it.
+															- 	This memory area will be used for virtual
+																Demand paging can also be because of page reclamation.	
+																swapped page bit is enabled.
+																
+																
+															All above overhead is tolerable for Server class, desktop environment.
+															not for low foot print, HARD-REAL-TIME system.
+															we can reduce overhead using mlock system call for avoiding page fault.
+
+													7. VFS layer will keep cached copy of LRU list pages which are recently accessed.
+														
+How to avoid kernel low memory area ?
+sysctl ()
+	allocate from high memory area first.																	
+															
+Process virtual memory															
+	http://duartes.org/gustavo/blog/post/anatomy-of-a-program-in-memory/														
+	
+	task_struct{
+		(mm_type.h)
+		mm_struct *mm 	----> contains on 3 GB of User sapce.
+	}
+	for kthread, mm =NULL
+	
+	/mm_type.h
+		mm_struct- 
+		{
+			/*List of VMA's*/	
+			struct vm_area_struct *mmap;
+			struct rb_root mm_rb;
+			pgd_t 	*pgd;	(page directory )
+				//32 byte pgd 
+				//	8 bytes * 4 records
+			
+			long task_size;
+				/*Advance interview question
+						To allow to run 32-bit application along with 64 bit application
+						3:1 have different meaning for 64-bit application.
+						
+						Question : What are the common challenge for running 64 application ?
+						Answer:	All the shared memory needs to be below 32-bit address.
+										create mmap below 32 bit boundary.
+										
+						Drawback of c:				
+						Size of int and lng varies based on architecture.				
+						uint8, uint16 is used.
+				*/
+				
+				
+		}
+..............................................................................................................................		
+							Page Table Traversal (Record length = 8 bytes for all arch)
+							Intel 80386 Architecture
+							
+All kernel data structure is mlock, no demand paging.
+All physical pages.
+..............................................................................................................................
+CR3 register = 1000
+	task_struct->mm->pgd is virtual address for CR3 register.
+	Use API for converting Virtual to Physical Address.
+	Load physical address in CR3 register.
+
+PGD = 4 entries with 8 bytes each (00, 01, 10, 11)
+
+Input Instruction Address:
+00000000 11111111 00000000 11111111
+
+00 000000 11111111 00000000 11111111
+................................................................................................................................
+Part-1. 
+	task_struct->mm->pgd is virtual address for CR3 register.
+	Use API for converting Virtual to Physical Address.
+	Load physical address into CR3 register.
+
+00 - offset : first two bits for PGD entries + CR3 address)
+	= 5000 (MMU generate this address)
+................................................................................................................................
+Part-2
+Address & Data bus is connected to the memory management unit to actual RAM.
+
+At address = 5000 there is physical page present.
+This is start of Page Mid Directory = 4KB (one page).
+
+PMD contains 512 records of 8 bytes length	= (2^9) * (2^3) 
+																		= 2^12	
+																		= 4 * (2^10)
+																		= 4 KB 	
+Out of 8 bytes, 4 bytes will contain next address for PTE - PAGE_TABLE_ENTRY
+																			
+Now from instruction address, next 9 bits = 40th entries is chosen = 6000 physical address (MMU generate)
+00 000000111 	11111 00000000 11111111
+
+This address = 6000 is page table entry.
+................................................................................................................................
+Part-3
+
+Similar to PMD again next 9 bits from instruction is used for offset + 6000.
+
+00 		000000111 111110000 	000011111111
+PGD		PMD				PTE				Actual Page
+
+Out of 8 byte, 4 bytes is used for find physical address = 9000.		
+................................................................................................................................
+Part-4
+
+At 9000, add offset from last 12 bits.
+................................................................................................................................
+
+From MMU -> L1 cache -> RAM
+At L1 cache, MMU will reserve small window of set of cache line = TLB (Translation look-aside buffer)
+
+It matches first 20 bits from instruction,
+If matches, it will directly get the physical address by adding offset.
+Does not even go to RAM.
+It reads the data and provide it to CPU.
+
+	1. At the beginning of task_struct, level-3 page fault occurs.
+		- 3 physical pages got allocated	
+			PMD, PTE, actual page.
+
+To make architecture agnostic, linux uses bits in total 
+8 bytes record is used
+4 Bytes = for physical address
+4 Bytes = for page level bit ( copy on write bit, descriptor, I/O priviledge level)
+
+When CR3 register is reloaded, TLB is flushed.
+Context process is expensive for process, but not for threads.
+For threads context switch, no TLB is flushed.
+
+Kernel has Lazy TLB handling
+Open() system call & switch to kernel mode.
+
+kernel was doing something, but now scheduler kicks in and context switch happens.
+now TLB is not flushed & CR3 is updated as late as possbile.
+That mean, Kernel mode context switch Cr3 is not loaded & no TLB flushed.
+Because kernel space is same C000 0000.
+
+**IMP:
+	4th record in PGD - 
+	Last record of PGD for every process will point to common PMD which happend to be kernel page table entries (PTE).
+	This happens to be swapper page dir
+
+	1. Process context switched from User mode to Kernel Mode, no Cr3 is loaded, no TLB flushed.
+	
+	2. But when kernel to user space happens, Cr3 is reloaded & TLB is flushed.
+	
+	3. Mode switch is very different than context switch.
+		USER <-> KERNEL mode
+			- no caching implications, because no TLB flushing.
+			
+		Context Switch	Process-1 <-> Process-2
+			- TLB flushes only in user mode, because of LAZY_TLB_HANDLING.
+			- No TLB flush in kernel mode switch.
+			
+		(TLB code is not clean in linux)
+------------------------------------------------------------------------------------------
+
+VMA are all kernel space data structers, kernel metadata information about the process.
+Page table is all kernel space allocation containing records having addresses.
+Process virtual address is technically black to begin with.		
+
+Kernel uses 2 MB pages size using buddy list
+1 level page table lookup.
+
+2MB * 512 entries from PMD
+= 1 GB
+Kernel swapper page dir contains only 512 records
+##############################################################################################
+
+
+Low level Memory Management Data Structure		
+include/linux/mm_type.h	(struct page)	~ 38 bytes
+
+	1. Hardware related info maintain at page table record (copy on write, User/ kernel page).
+	2. get me a physical page, instruct kernel where to get it from
+	
+		Memory divided into physical page frames
+			
+			include/linux/mmzone.h
+			pg_data_t
+				- node_zones
+						1. ZONE_DMA
+						2. ZONE_NORMAL
+						3. ZONE_HIGHMEM
+							-> zone_mem_map
+								->struct page
+								
+	3. Each page represented by a physical structure.
+		this contains lot of kernel specific information about the page, nothing to do with hardware.
+		
+	4. Kernel might contain reference couting for single physical page for multiple processes.
+		Only when all of them freed, then release this page. reference_count == 0. (kernel specific info)
+		
+	5. Page might belong to different Buddy list
+		At releasing page, it should be order-* from where it came from in Buddy list. 
+		Along side of its neigbour in free list.
+		
+	6. Complicated nested struct, union ; struct page is created for every single physical page.
+	4GB / 4KB = 1 million pages
+	
+	If page structure = 32 bytes
+	
+	Total = 32 * 1 million = 32 million (32 MB) bytes required.
+	If it is 40 bytes, 40MB.  
+	For every bytes increased in page, several MB's are reserved.
+	
+	7. no info about which task is using this page is not maintain.
+	Many task may be using this page.
+	
+	8. {	
+			address_space *mapping
+			void *s_mem;								/*slab first object*/
+		}
+		
+		SLAB allocator : Using the same page for small multiple object allocations in linux kernel.
+		
+		atomic_t map_count;	/*how many virtual addresses mapped to this physical page*/
+		
+		
+	9. In Multi-CPU arch
+			A. Uniform Memory Access
+			B. Non-Uniform Memory Access
+		
+		A. Uniform Memory Access			(node_zones with one entry = node-0 : CPU-0 1:1 mapping)
+			2 CPU have full access to whole RAM, any address.
+			 Bus arbitrator will co-ordinate.
+			
+			When CPU-1 is generatin address on address line, CPU-2 address will not go through.
+			Data access is serialized.
+			True Parallel memory access is not allowed.
+			
+			Each core will have L1-cache.
+			16 core/CPU arch sharing same address bus / memory bus.
+			
+			CPU should wait 16 clock cycles for its transaction to complete.
+			Over a period of time, as we keep increasing core, sharing common memory due to bus contention performance actually decreased.
+			This is problem with Uniform memory access, in laptop, desktop.
+			
+		B. Non-Uniform Memory Access		(node)
+			- separate set of address data line for each core/node
+			- 2 different memory map for bus arbitrator as switch.
+			- no bus contention.
+			- near & far memory 
+			- memory affinity.
+			
+			e.g. Data centers with VM running 
+					Each VM will map to different CPU/core.
+					
+					This VM-1 is affinity to CPU-1 with node-1
+					
+					2. True parallel computing which uses MAP_REDUCE, GRAPHING_ALGO
+						dataset on computation, IPC used.
+						
+						Search record in database
+							- linear search
+							- parallel machine 64 core/CPU.
+									Entire DB read into memory, breaks into 64 segments/nodes
+									CPU-node search algo used. (Hadoop)
+...........................................................................................................................................
+
+	1. When allocating a physical page, mention which node, zone you want ?
+			node-0, ZONE_NORMAL			:	CPU-0
+			node-1, ZONE_HIGHMEM		: 	CPU-1
+									
+			skip the node, take current node.
+............................................................................................................................
+			include/linux/mmzone.h
+			pg_data_t
+			page global data
+			{
+				zone node_zone[MAX_NR_ZONE];
+				{
+					 	/*	Buddy List	order-0, order-1 .. */
+						free_area[MAX_ORDER]	
+						{
+							list_head free_list[MIGRATES_TYPE];
+								nr_free ; // no of free pages.	
+						}
+				}
+			}
+				
+-------build_all_zonelists(NULL,NULL);
+		/*	Physical Memory
+			3 free area + 1 global free area.
+			ZONE_DMA 			: 	lower 16 MB only for intel 386 arch
+							- 2^0, 2^1 all low address physical page belongs to DMA areas upto 16 MB.
+			ZONE_NORMAL 		: 	till 887 MB, with 2MB physical page size	
+			ZONE_HIGHMEM 	: 	after 1GB all above, 4KB
+		*/
+		
+		All the way upto 1 GB, Physical page = 2MB.
+		The buddy page is always 4KB physical page.
+		From allocation perspective, All 3 ZONE's have 4KB page.
+		
+		 Page table entry will 2MB, insulated from page level allocator.
+		 abstracted away from page level allocator.
+		 
+		 When memory is allocated in kernel space, it will add entry in page table for 2MB page frame.
+		 But in 2MB page frame, what is legal for us to use is only 4KB page.
+		 
+		 e.g. when malloc(10KB) is run, 128 KB is allocated actually, but legal is 10 KB.
+		 
+		 Buddy Pages are not equal to Physical Page Size.
+		 Buddy will allocate 4KB page irrespective of Physical Page frame size.
+		 Program is independent of architecture.
+		 
+		 Lowest allocator routine : BUDDY_LIST
+		 4KB : single page, 	 more than 4KB is always physically contiguous.
+		 
+		 1. allocate memory on buddy system , low level api used,
+				- alloc_pages():  allocate 1 page.
+				- alloc_pages(GFP_MASK,  )
+						GFP_MASK : GET_FREE_PAGE
+							which zone, order, when no page present what to do, block process, return NULL.
+					
+		2. We have physical page struct, its useless not a physical / virtual address.
+			
+			page_to_virt : page struct address to Virtual Address  
+					
+			page_to_PFN : page struct address to Physical Page Frame Number	
+		 
+		 Following will remove page from free list.
+		 __get_free_page : return virtual address.
+		 __get_free_page(GFP_KERNEL, 10) : 1024 pages = 4MB
+				
+		add back to free list.
+			free_pages(virtual address, order)
+		 
+		When we request 1 page, it got removed from all mappings.
+		one 4KB page, 1 record removed from free list.
+		
+		Next time , when order =5 is requested, next page will be from 2^32 address after that.
+		
+		
+		In kernel , 
+			actual physical pages are allocated and page table entries are mapped. allocate physical memory.
+			No demand paging work in kernel.
+			Allocated memory is contiguous in Physical as well as virtual address space for KERNEL.
+		
+		In user space, 
+			only virtual memory boundary is marked.
+			No Buddy allocator is used, on demand paging works.
+			It always allocated in single page granularity Order = 0.
+			1 MB is allocated, only VMA is created.
+			when page fault occurs, only 4KB allocated.			
+			get_free_page(GFP_USER)
+.........................................................
+			GET_FREE_PAGE (GFP) flags
+
+GFP_USER			:	Allocate memory in USER mode. may sleep	, [demand paging]
+GFP_KERNEL		:	Allocate memory in KERNEL mode. may sleep	 : e.g. driver uses
+GFP_ATOMIC		:	KERNEL mode, may not sleep, use emergency pool (10-100 MB) if needed.	
+GFP_NOWAIT		:	KERNEL mode, may not sleep, Fail immediately if req. memory NA.
+GFP_NORMAL		:	KERNEL mode, ZONE_NORMAL, may sleep.
+GFP_HIGHUSER	:		
+GFP_DMA			:
+
+In intel they use 2 bits used for specifying KERNEL-SPACE / USER-SPACE. 
+
+Use-Case-1
+GFP_KERNEL : only be use when allocating memory on behalf of Process context with 
+						preempt_enable()
+may sleep
+	What if allocation fails:-
+	If free area is empty, process system calls(read()) , taken out of run-queue. no pages available.
+	process added to PAGE_WAIT List i.e. Process-Blocked
+
+	Two things can happen.
+	1. Wake up swapper - kswapd
+		KSWAP-D: swapper woke up & responsible for evicting LRU page = head. 
+			Case-1 
+					If the evicted page is enough, then blocked process is woke up.
+						- preempt_disable : scheduler cant take any pre-emption decision.
+			Case-2
+					What is swap is full, it will block forever until some other process comes and free some memory.		
+					
+	Problem: DEADLOCK for atomic section with GFP_KERNEL
+	
+		1. We should not use GFP_ATOMIC for any page level allocator if we are allocating in atomic context.
+		2. Atomic_Context is generalizesd term to indicate scheduling is disabled (directly / indirectly).	
+				preempt_disable : scheduler cant take any pre-emption/scheduling decision.
+		3. When we block a current process and call scheduler to schedule some other process.	
+			if 	preempt_disable  &&  get_free_page(GFP_KERNEL)
+				if ( no page is available)
+					{
+						current process is taken out of run-queue
+						schedule is disabled
+						scheduler kicks in, check preempt_count and says i cant do anything & goes out.
+						/DEADLOCK
+						
+						Now you cant enable pre-emption because you are out of run-queue.
+					}
+	
+	Solution : You should allowed to block for PAGE in any atomic section.
+					Never try to memory in INTR Handler Code.
+					Never allow any blocking calls in atomic section or low level INTR Handling Section.
+					
+					e.g. Process is taken out of run-queue
+							and in keyboard INTR handling we try to allocate GFP_KERNEL page
+							It might get blocked and never comes out run-queue. 
+							
+							Other process also cant run, because preempt_disable is ON.
+			
+.....................................................................................................................................................................
+
+Use-Case-2 
+GFP_ATOMIC | GFP_NOWAIT ( non- blocking )
+
+If we want to allocate memory in atomic section or in INTR_Handler().
+Check the return value & take the error path.
+
+GFP_ATOMIC : use Carefully/Sparingly should not exhaust emergency pool.
+Use GFP_NOWAIT more often.
+
+				[
+					Page_base_allocator will be serialized.
+					In UMA, if 10 threads tried to allocate simultaneously on same core, on same node, it will be serialized (spin_lock).
+					In NUMA, no contention.
+				]
+.....................................................................................................................................................................
+
+Use-Case-3
+GFP_USER	
+	-	Demand paging 
+	-  Affinity to ZONE_HIGHMEM
+		If we want a ZONE mention it explicitly
+			
+.....................................................................................................................................................................
+
+Use-Case-4
+GFP_NORMAL 
+		- GFP_KERNEL implies GFP_NORMAL		
+			
+.....................................................................................................................................................................
+
+Use-Case-5
+			
+GFP_DMA
+	- GFP_KERNEL or GFP_ATOMIC 
+		allocate pages which is DMA'able
+.....................................................................................................................................................................
+
+
+__GFP_COLD 		: cache consistency with some performance penalty, start reading from disk.
+
+__GFP_HIGH		: use emergency pool, has high priority.
+								GFP_ATOMIC =  GFP_NOWAIT | GFP_HIGH
+								
+__GFP_NOFAIL	: allocation not allowed to fail (think twice before using) keep scanning free area in loop.		
+								- double fault handler, watch-dog handler	
+								- 	it is optimistic from process context switching page will get freed in near future.
+								- it allows context switch
+								- DEADLOCK : __GFP_NOFAIL && preempt_disable().
+
+__GFP_NOTRETRY 	: fail fast approach
+__GFP_REPEAT		: 	immediately fails, try one more time.	(scan twice)
+__GFP_NOWARN	: allocation fails, no warning
+__GFP_THISNODE	: node-local memory only
+
+GFP_NOIO				:	dont incurred disk I/O to get the memory	[ensure determinism in allocating memory]
+									dont start disk I/O, no swap-d wake up 
+GFP_NOFS				:	no custom page fault handlers, no calls to filesystem calls.
+								
+************************************************************************************************************************
+
+		 SLAB_ALLOCATOR	(KERNEL usage only Algorithm)	
+		 
+			- in user space, one full page is always allocated, does not use SLAB, use page fault handler.
+			- 3 Queue (slab_full, slab_partial, slab_empty)
+			- Slab is a metadata, how many consecutive pages comprises of this slab.
+				how many queues are there
+			
+Many data structers are less than 1 PAGE size = 4KB.
+Granularity is not achived.
+		 
+Very rarely we use buddy system allocator in kernel space.
+We use general purpose function wrapped on top of SLAB_ALLOCATOR
+i.e. SLAB_ALLOCATOR											
+											
+	0. Architecture Pattern			
+			task_struct ~ 1.6 KB is less than one page.
+			mm_struct ~ 48 bytes
+			vma_struct ~ 48 bytes
+			file_struct ~ 200 bytes	(if one process got fd full 4 KB gets wasted.)
+				To allocate a FD, we have a allocate a files_struct = 190 bytes ~ 200 bytes.
+				If 2nd process also got FD, file_struct 2 will get another page for only 200 bytes 
+				HUGE wastage.
+				
+	1. SLAB = kmem_cache  structure (KERNEL Memory cache)			
+	2. For all kernel data structure that is constantly allocated-free, allocated-free, 
+		kmem_cache is used.
+	3. file_descriptor, vm_area_struct, socket_buffer = kmem_cache_struct is used.	
+	
+SLAB allocator function:
+		1. kmem_cache_create(	name , size(object in slab : struct my_slab),   )		
+		2. kmem_cache_alloc()
+		3. kmem_cache_free()		
+		4. kmem_cache_destroy()
+		
+e.g. 
+SLAB can be one or more contiguous pages represented by 
+struct slab_struct	= 1 PAGE.
+
+fd = 200 bytes.
+Divides the slab into multiple 200 bytes slot.
+	4000 / 200 = 20 slots = 20 objects of 200 bytes FD's
+	
+		1. kmem_cache_create(	name , size(object in slab : struct my_slab),   align (0), flags, *func_ptr)
+			- kmem_cache is created along with 3 blank queues.
+			- no SLAB (metadata) are created, no page set aside.
+			- align; objects are aligned words of 8, 16 bits
+			- flags; SLAB_HWCACHE_ALIGN , SLAB_POISON, SLAB_REDZONE.
+			- *func_ptr () ; constructor function 	
+					whenever a slab is created, this above func_ptr() is called to pre-populate elements in object.
+			
+		2. allocate a memory using 	kmem_cache_alloc()
+				- allocates kmem_cache for one file_descriptor
+				
+		3. Go and look for slab_partial (=PARTIAL_QUEUE )
+				for any available page.
+				
+			If there are no page available in PARTIAL_QUEUE, 
+				look into slab_empty (=FREE_QUEUE)
+
+			4. __get_free_page and add it to PARTIAL_QUEUE
+				break that page into 200 bytes and information is maintain in META-DATA 
+					and return the offset of the 1st '0th' byte.
+					
+				Now again if it sees kmem_cache_alloc of the same slab, 
+				it will go & look at PARTIAL_QUEUE.
+				now at PARTIAL_QUEUE, there is already a page.
+				
+				In this page it knows the 1st object is used via BITMAP maintain in SLAB META-DATA
+				returna 2nd slot offset.
+					
+			5. Once the PARTIAL_QUEUE is full, 
+				it will migrate this page(SLAB) to FULL_QUEUE.
+				
+			6. kmem_cache_free()		
+					Now PARTIAL_QUEUE is getting freed & whole page is freed.
+					This page is not given back to KERNEL BUDDY_FREE_LIST
+					It moved to FREE_QUEUE for optimization over the Buddy.
+			
+				e.g. Re-fill ceramic coffee cup.
+		
+			7. How long to keep FREE_QUEUE 
+				FREE_QUEUE keep on growing.
+				
+				At one point, wa can not get a free page from get_free_page() 
+				free_area is running short of pages.
+				it starts PAGE_RECLAMATION_PHASE at 88% usage.
+				 Go & scan all the FREE_QUEUE from stack.
+		
+				e.g. house keeping person will go and collect all the free cups & make them ready to use.
+				
+				All of the free pages added from FREE_QUEUE to free_area.
+				This whole algorithm is SLAB.
+		
+		
+		 8. Size of SLAB will be always order of 2^POWER.
+				2.6 KB more than half page size, SLAB is 2/4 Pages.
+				
+		9. root = cache_chain = head of linked-list of kmem_cache
+		
+IMP		
+******		
+	EACH kmem_cache is for one particular data structure like FD, VMA, VFS, i-node, skBuff, Sockets dynamically created by kmem_cache_create().			
+	Different subsystems will call kmem_cache_create() for creating different SLAB's.
+				
+	We dont need to traverse throught kmem_cache linked-list
+	We specify which kmem_cache we want to allocate.
+
+	There is no need to search slab structure, when you have object already.
+	Every slab object belongs to page, every page tells you which slab it belongs to.
+	e.g. For memory reclamation (use case)
+	struct page_struct
+		address_mapping : slab_object
+				
+				10. slab, kmem_cache is also a structure.
+						so recursively slab is used.
+				
+				11. Unloading a subsystem or driver, 
+						kmem_cache_destroy() is used, but not on running subsystem's slab being used.
+						sever memory leaks.
+						
+					e.g. Sun & solaris OS had SLAB allocator USP.
+
+******************************************************************************
+
+Problem with SLAB
+	1. With SMP/ multi-core architecture, multiple CPU contention for SLAB queues.
+	2. Linux created SLAB_QUEUE's as per cpu data structures to avoid contention.
+	
+	3. Redundant
+		sometimes SLAB kmem_cache can becomes redundant i.e. 2 slabs with same size.
+		2 different driver dev MOUSE (64 bytes), AUDIO(64 bytes)
+		2 kmem_cache is used.
+		
+		huge prolification of identical size objects, because driver developers not aware of each other's code.
+	
+	
+New Problem	
+	3. Quad-core architecture, 4 copies of slab.
+		For every kmem_cache, there are 4 copies of SLAB_QUEUE's. 
+		Increased the metadata overhead.
+		
+New Solution	SLUB_ALLOCATOR (Un-Queued SLAB)
+
+	4. New version without queues are called SLUB_ALLOCATOR.
+		no PARTIAL_QUEUE, FULL_QUEUE, FREE_QUEUE
+		
+		Put which slab_queue it belongs to in page_struct itself like (free, full, partial).
+		
+	5. For Server class environment, we should use SLUB_ALLOCATOR.
+		especially on multi-core architecture.
+		
+*************************************************************************************
+
+
+For dongle, appliances use SLOB_ALLOCATOR.
+		
+		1. SLOB is used where no dynamic, heavy KERNEL memory allocation is required.
+		2. PRE_Allocate a large chunk of memory & keep recycling it.
+		
+*************************************************************************************
+
+We can use which allocator to choose using 
+	/boot/config-4.3.3-vbox
+		CONFIG_SLAB
+		CONFIG_SLUB=y
+		
+		make menu_config
+*******************************************************************************************
+
+Big Problem 
+	3. Redundant
+		sometimes SLAB kmem_cache can becomes redundant i.e. 2 slabs with same size.
+		2 different driver dev MOUSE (64 bytes), AUDIO(64 bytes)
+		2 kmem_cache is used.
+		
+		huge prolification of identical size objects, because driver developers not aware of each other's code.
+		
+Solution:
+To solve this, introduced general purpose allocation routine on top on Slab
+which is very generalized.
+
+But if we have rough number & not power of 2, then use SLAB allocator.
+
+To solve this General purpose memory management functions are used.		
+		
+		General purpose memory management functions
+		
+		1. void* kmalloc( int size, int gfp_flags)  	Bytes 8,16,32,64, 96, 128, 192, 256, 384,  512, 1024, 2048, 4096 
+			- limit is 4MB (2^10 Physical Pages)
+		
+		2. void* kzalloc( int size, int gfp_flags)  
+		
+		3. void* kcalloc( int num, int size, int gfp_flags)  
+		
+		4. void free(void *ptr)
+		
+		5. void* vmalloc(int size)
+			- Blocking call	-> implies GFP_KERNEL
+			- we can not totally allocate beyond 128 MB
+			- But Virtually contigous 16MB is possible with many different buddy's joined together.
+				we can assemble multiple buddies.
+		
+		6. void* vfree(void* ptr)
+		 
+	
+1. void* kmalloc( int size, int gfp_flags)  	Bytes 8,16,32,64, 96, 128, 192, 256, 384,  512, 1024, 2048, 4096 , 8192, 16KB (SLAB-cache)
+		- kernel boot up, and will have pre-allocated KMALLOC			
+		- kmalloc(60 bytes, GFP_KERNEL)	
+			-> 64 bytes slab will be allocated
+			-> which particular slab with next higher slab byte is present.
+		- 	Select SLAB automatically.	
+		-  60 bytes repeatedly, re-using the same page
+			
+		- But if we want to allocate, 65 bytes ; 128 bytes slab will be allocated
+			now 96 bytes is allocated.
+			2^power is efficient.
+		
+		-  If we use PAGE_SIZE > 4KB,
+			it will wrapper on top of BUDDY_ALLOCATOR.
+			always allocates physically contiguous memory.
+		- We need virtually contiguous memory.
+			Graphics/Network (NPU) card have DMA & requires Physically contiguous memory.
+			No MMU is used in DMA.		
+					
+2. MMAP I/O	( Memory mapped I/O)
+		- Device has memory which is mapped into physical address space.	
+		- No kmalloc is used here.
+		- mmap I/O regions are never under free list free_area.
+		-  free_area does not have addresses belong to hardware devices.
+		
+		- For hardware devices, resource_struct is created.
+		- When free_area is populated, all the resource_struct is removed before hand.
+		
+		- We can verify which area is not under free_area by using command
+			$less /proc/iomem
+				- any page which is mapped to this physical address is not under free_area
+				
+				
+3. vmalloc()
+	
+	- in kmalloc, both virtual and physical addresses are contigous.
+	- We vmalloc() which gives buffer which need not to physically contigous
+			vmallo(64 bytes) - implies GFP_KERNEL indirectly			
+	- virtual addresses can be non-contigous.
+		physically will be different pages.
+	- vmalloc dis-advantage is never allocates less than a page.
+	- Used in buffer allocation.	
+	- in 32-bit, this vmalloc is limited to 128 MB in virtual address space.
+	- vmalloc is not only used in USER_SPACE, but also used in KERNEL for buffer allocation in KERNEL_SPACE.
+...........................................................................................................................................................................................
+	
+	USER_SPACE allocation is only via DEMAND_PAGING via get_free_page()
+	
+	SLAB is internally using BUDDY_ALLOCATOR 	
+		kmalloc, vmalloc()
+		Slab()
+		BUDDY_ALLOCATOR
+					
+	If lot of USER_SPACE allocation is doing, it will be in 2^power,
+		SLAB will be used very extensively.
+					
+.........................................................................................................................................................................................
+
+				DAY-3 : video-3
+
+				Diagnostic, debugging, statistic
+				
+$ slabtop	
+	- all slab info
+					
+	1. If system is using network I/O, 
+			skBuff coming up at top.
+	2. If file open(), close() repeatedly, flie_descriptor will be come up at top.
+		Usage pattern.	  
+		
+$ ls /sys/kernel/slab	
+		1. information about SLUB_ALLOCATOR
+		2. So many kmem_cache (linked-list) is created.	
+		
+	$ ls /sys/kernel/slab/kmalloc-16
+	$ ls /sys/kernel/slab/kmalloc-16/objects
+	$ ls /sys/kernel/slab/kmalloc-16/object_size
+	$ ls /sys/kernel/slab/kmalloc-16/slab_size
+	$ ls /sys/kernel/slab/kmalloc-16/alloc_refill
+	$ ls /sys/kernel/slab/kmalloc-16/alloc_fastpath
+	$ ls /sys/kernel/slab/kmalloc-16/alloc_from_partial
+	$ ls /sys/kernel/slab/kmalloc-16/alloc_slowpath
+														
+	$ echo 1  > /sys/kernel/slab/kmalloc-16/poison													
+	
+	$ echo 1  > /sys/kernel/slab/kmalloc-16/redzone
+		- add 4-8 extra bytes pattern at end of slab object to check memory is intact of buffer_overflow.	
+................................................................................................................................................................
+
+Process Virtual Memory map
+		$ cat /proc/process-id/maps
+		$ cat /proc/$$/maps 	- for shell
+			
+		$ less /proc/$$/status
+				- fetch info from task_struct & mm_struct( starts from Vm)
+		$ grep ^Vm /proc/$$/status
+			VmPeak	- Virtual memory allocated
+			VmSize 	- Vm is being used.
+			VmRSS		- Current Physical footprint of the process
+				e.g.
+				Samples/05_userspace/malloc_test2
+				PID = 4090
+				
+				$grep ^Vm /proc/4090/status
+					VmPeak 	= 2020 KB
+					VmSize 	= 1900 KB
+					VmRSS 	= 304 	KB	***
+				
+				>>>Allocated 16MB using malloc
+					VmPeak 	= 18288 KB
+					VmSize 	= 18288 KB
+					VmRSS 	= 304 	KB		***
+							*No Physical memory usage.
+							*Demand Paging
+				>>>Filled 1KB worth pattern			
+				>>>Filled 1KB worth pattern			
+				>>>Filled 1KB worth pattern			
+				>>>Filled 1KB worth pattern
+					VmPeak 	= 18288 	KB
+					VmSize 	= 18288 	KB
+					VmRSS 	= 1336		KB		***
+				
+				
+			VmLck	- #memory locked using mlock() system call
+			VmPin	- backing physical page pinned to particular node. 
+					(For NUMA, always 0)
+			VmHWM 	- Max. memory being used.
+			VmStk		-	How much  stack is being used.	(Max = 8MB)
+			VmExe		-	 4KB
+			VmLib		- Shared libraries	(mmap regions to all the vma's)
+			VmPTE		-	#memory used by PTE 	
+			VmPMD	-	#memory used by PMD
+			VmSwap	-	if any pages of this process is swapped out, then it will show that number in KB
+				
+..................................................................................................................................................................		
+		
+			Linux kernel VM parameter
+			Documentation/
+			src/Documentation/sysctl/vm.txt
+			
+			$	/proc/sys/
+	
+	$ cat /proc/sys/vm
+	1. swappiness	(if swaps configurable)
+			= 10 (less aggressive)
+				: if physical memory usage = 90% memory used then start swapping the pages to disk 
+				
+		Embedded devices : no swaps		
+		Aggresive swapping 
+			- If applications used heavy pool of memory algorithm, JVM, Oracle Application, start aggressive swapping.
+			- Java Program = 128 MB 
+				Allocate lot of memory, touch them late , start swapping immediately 	
+				
+		Less Aggresive 
+			- optimized C program, allocate-use-free it 
+	
+	2. oom_kill_allocating_task	
+		-	Over commiting memory e.g. Physcial = 10 MB
+		Process-1 ask for 10 MB
+		Process-2 ask for 10 MB
+		
+		For embedded, no swap , no overcommit, 
+	**	disable overcommit_memory =2
+		fork : cannot allocate memory
+		
+	**	overcommit_memory = 0
+		overcommit_ratio	= 50 %
+		It will use heuristics, whether physical memory matches overcommit_ratio.
+		
+		e.g. when many application allocates a lot of memory , but use very little.
+			like Java application, or C program with large buffer allocation.
+	
+	** overcommit_memory = 1
+			always overcommit.
+
+***Problem:			
+	If overcommit_memory =1 , physical memory =10 MB, no swap configured
+	Process-1 ask for 20 MB	, done , after 10 MB it blocks
+	another Process-2 ask for 20 MB	, done , it will also blocks
+	>> leads to DEADLOCK
+	
+	All of them try to write, paralized system
+
+***Solution: 
+	OOM_KILLER : 	dedicated k-thread brought to life 
+	if more than 8 process  waiting on PAGE_WAIT_LIST
+		2 per core, on quad core arch = 8
+		
+	Scan all the processes, find out which process got highest OOM_Score	(bad karma), got killed.
+
+	Factors for OOM_Score	(/proc/$$/oom_score)	echo $$ : current PID
+		1. Process keeps allocating lot of memory , OOM_Score increasing.	++
+		2. forks more child, OOM_Score increases.										++
+		3. long running process, OOM_Score decrease.									--
+		4. Process using mlock(), sched_setscheduler(), api to set real time policies
+			no OOM_Score increased, it assumes its a critical process.
+	
+		5. 
+		***Problem 
+			some good process, oom_score might increased & kernel kills it
+			MySQL DB 
+				- not run as root_user 
+				- no use of priviledge system call
+				- fork lot of threads
+				- allocation-free repeatedly used.
+		***solution :	
+			$echo -1 > /proc/$$/oom_score_adj	(dont compute oom_score)
+				- make process VIP.
+				- dont kill it
+		
+		6. If you thinks process is culprit process & should be always killed (it might spawn again)
+			e.g. tool for routine monitoring
+			$echo 1000 > /proc/$$/oom_score
+			
+			>>$ information about currently running process
+				cat /proc/self/status
+					: gives information about cat process.
+			
+			system.d have wrapper code to handle this things of oom_score = -1 for self
+			sysctl start http.d
+			
+		7. /proc/sys/vm/oom_kill_allocating_task	= 0 
+				>> go and scan list of process, process with highest score will be killed.
+			= 1, 
+				>> 	Kill the process which try to allocate memory, on android phones mostly use this. 
+				
+			#everything under /proc is become standard ABI application binary interface.
+........................................................................................................................................................................				
+drop_caches:
+	
+	$free
+		total, used, free, shared, buffers, cached
+		
+		buffers	: slab-free-queues memory buffer.
+		cached : VFS page caches.
+		
+		1. total, used, free, shared, buffers, cached
+													42876	 131076
+
+			If we keep accumulating the buffer, allocating page after some time in BUDDY_ALLOCATOR free slow.
+			We need to release some memory from FREE_QUEUE.
+			- freeing this will improve buddy system performance.
+			
+			>> echo 1 > /proc/sys/vm/drop_caches
+				buffers = 244 	from 42876
+				cached = 20528 	(releases some entry in VFS page cache )
+				
+			>> 2 only buffers
+			>> 3 only cached
+..........................................................................................................................................................................
+
+ls /sys :	
+				- abstracts complete device drivers information (DTS)
+				- give dignostic information for kernel
+		/sys/bus	
+			- all buses supported to CPU
+		/sys/bus/pci
+			- all pci bus connected to CPU.
+		$tree /sys/	
+
+in recent time, /proc & /sys are almost similar but
+/proc is available for USER_SPACE developer as application binary interface.
+/proc : dir entries we need to create, /sys entries will be automatically created.
+		
+		
+		

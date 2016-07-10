@@ -1,0 +1,373 @@
+**************************************************************************************************************
+		Linux Process Modelling
+								CLONE - PROCESS = fork(), 
+												PTHREAD = pthread_create()
+								task_struct :	 PID, TGID, PPID
+								Container :  CGROUPS  +  NAMESPACE 
+**************************************************************************************************************
+Ways to implement concurrent processing.
+	1. fork
+	2. vfork
+	3. fork-execve in LINUX
+
+1. Linux kernel treats all processes threads identically.
+	scheduler does not differentiate for applying scheduling decision.
+
+2. Both are created for multi-tasking.
+	For concurrent perform multiple jobs.		
+
+3. fork() used to create new processes, 
+		
+		UNIX-fork()
+		if(return_value == 0){
+			// child
+			execve("browser");		
+		}
+
+		Here performance problem exists.
+		
+		1. UNIX-fork()	
+				-	will copy entire PCB (task_struct) & Text, Data, Heap, Stack segment into new virtual memory area map.
+				-	all Virtual memory map & physcial memory is also copied.
+				-  Old one memory map is freed.
+				- 	memory copy could have been avoided.
+				
+		2. solution BSD vfork()
+			vfork()
+				- 	only to fork() & execve()
+				-	in BSD entire Physical memory is not copied.
+				-	Instruction pointer pointing to one physcial page is copied.
+				-	only 4KB page is copied instead of 10 Mb entire program.
+				
+			Problem with vfork():
+				1. more than 1 page needs to copy when program's Instruction Pointer ends at page boundary.
+				2. code order is strict for vfork() - line 1, execve() - line2
+							if(return_value == 0){								
+								execve("browser");		
+							}
+				3. beyond the page IP goes child will fail, SEG_FAULT
+				4. should not access any global variable that might present in some other page.
+				
+				5. execve() failed, mark vfork() failed since vfork() has not returned to parent.
+						error handling code is not at the same page.
+				6. vfork() is present on linux for bug to bug compatibility.		
+					
+Question-1		: 	Which one will schedule first child/parent in UNIX-fork()	?
+Answer 			:									
+							vfork() problem 
+								Take parent out of run-queue.
+								Allow child to run first.
+.....................................................................................................................................................................................				
+
+			3. LINUX copy_on_write(microsoft & Linux)	
+					1. Use fork()
+					2. Virtual memory areas are copied, new task_struct is created.
+						But both virtual_memory_area is pointing to same physical pages with COPY_ON_WRITE bits enabled.
+						map_count++ incremented.	
+						
+					3. Copy only 1 page size data ~ 4KB, overhead of copy is less. 	
+						Physical memory is not copied, WRITE_FAULT but demand paging is used while writing & PTE are updated.						
+							- task_struct (1.6 KB)
+							- vma_struct (1KB)
+							- mm_struct	(40 Bytes)
+				
+					4. If parent exit(), task_struct & mm is removed
+						map_count--(physical_page)
+						
+					5. Child is added at head of the run-queue, parent is not removed from run-queue.
+						so when execve() fails, parent will get failed message in 
+....................................................................................................................................................................................................
+To replicate vfork by making child at head of run-queue.
+	$	cat /proc/sys/kernel/sched_child_runs_first	== 1 (BSD compatibility with vfork() on LINUX)
+....................................................................................................................................................................................................
+
+Problem with fork() on linux & everywhere
+	1. Both processes have their own memory map.
+		One process can not share data with another process.
+		
+		IPC, Signal ,shared memory needs to be used.
+
+******************************************************************************		
+										P_THREAD
+******************************************************************************		
+Solution:	P_THREAD
+		Threads by IBM-OS-2	- Desing pattern
+			main()
+			many functions()
+			
+Problem:
+		functions running sequentially.
+			foo()		-> 	bar()
+			foo() blocked on I/O , now bar() can't run.
+			
+		
+Concurrency - context switch 		
+		Function that can run concurrently is abstracted into higher level data structure called threads.
+		Single core arch	- not parallel but concurrently	/ multi-tasking
+			e.g. 
+				Human with single brain multi-tasking.
+				Listen & email check.
+				
+		1. If one thread is blocking, run the other thread.
+			Single address space 
+			Data_structure - IP 
+...............................................................................................................................................................................
+
+Solaris OS
+
+		Every PCB will one thread_struct to represent one main thread.
+			- Thread_Struct_Queue will represent cpu_register state for main() function.
+
+		LWP_create() 	-	add one more thread point to some other location.
+		Process scheduler sees on process_struct.
+		It has to apply thread scheduling, 
+.........................................................................................................................................................................................		
+
+
+Linux KERNEL Thread		
+
+		Threads should only be used to take advantage of multiple processors or for specialised applications (i.e. low-latency real-time), 
+		not as a way of avoiding programmer effort (writing a state machine or an event callback system is quite easy).
+		
+		A good rule of thumb is to have up to 1.5 threads per processor and/or one thread per RT input stream
+		
+		- clone() system_call wraps fork, vfork & pthread_create()
+		- NPTL 	-		IBM Native POSIX Threading Library (1997)
+		- IEEE P_THREAD Library (POSIX Threading Library)
+			In early days , its called User_threads.
+		
+		1. MAC OS dont depend on kernel support for P_THREAD library.
+			a Thread_Struct_Queue is present at USER_SPACE.
+			
+		2. When you linked your program in PTHREAD library, before main() /loader function PTHREAD_STUB being added.
+			PTHREAD_STUB loader will maintain its own thread_struct.
+			Also register signal handler for SIG_PT_ALLOC every 100 sec.
+			
+			Now signal_handler work like a scheduler in USER_SPACE.
+			How signal_handler will use SET_JMP, LNG_JMP call to save current context,
+				long_jump to one function referred by new thread.
+		
+			Advantage		: can be ported to any OS, no kernel support required.			
+			Disadvantage 	: too slow.			
+			
+			Kernel Scheduler schedule USER_SPACE processes,
+				but Alarm() system_call, will be used by that process to schedule USER_SPACE PTHREAD.				
+				
+.............................................................................................................................................................................................
+
+USER_SPACE process will have stack (MAX = 8 MB)
+New Thread will have its private stack	(MAX = 8 MB)
+
+Total = 16 MB
+
+Clone()
+		1. copies the task_struct using CLONE_FLAG's
+		2. Deep_copy or Shallow_copy depend on FLAG.
+
+1. fork()
+			- clone(	child_stack = 0, 	
+							flags = CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD, 	
+							child_tidptr = 0x828329	)
+			
+2. pthread_create()
+			- clone(	child_stack = 0xb75f2464  ( = number1 + 8MB)	
+							flags = CLONE_CHILD_CLEARTID | CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVMEM | CLONE_SETTLS ,	
+							parent_tidptr = 0xb75f2ba8	)
+		
+			- mmap2(	NULL, 	8MB, 	MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK )	= number1
+..............................................................................................................................................................................................................................		
+			
+1. getchar, printf uses PTHREAD_MUTEX (FUTEX_WAIT_PRIVATE = Fast USER_SPACE MUTEX run by PTHREAD)		
+
+2.  In 2.4 kernel, we will see 10 Threads as 10 processes over here.
+	$ ps ax 
+	>> 10 threads will have same PID
+	Problem : for monitoring tool different PID is required.
+
+	Solution : 2.6	: TGID
+3.  Assume Process-1,			
+			PID 	=	100,
+			TGID= 	100 (	TGID & PID will be same )	
+
+			PPID = 99		( Parent )
+			
+4. when Process-1 fork() child process, with minimum flags, 
+	it creates a task_struct's of Process-2 
+		PID 	=	101
+		TGID = 101
+		
+		PPID = 100		************************
+
+	Thread-1 
+		pthread_create()
+		task_struct's 
+			PID = 102			Unique PID	
+			TGID =100	
+			
+			PPID = 99			*********************
+			
+			
+++++++++++++++++++++++++++++++++++++++++
+			PID = TGID for process
+++++++++++++++++++++++++++++++++++++++++			
+Parent			|		PID	|	TGID	|	PPID							||			
+Process - 0	|		99	|		        |				                    ||			
+..........................................................................              ||			
+Process-1	|		100	|		100	|		99	                    ||			
+99's fork()	|	         	|		        |						            ||			
+..........................................................................              ||			Process-1	(PID=100, TGID =100, PPID = 99)		
+Process-2	|		101	|		101	|		100	                    ||					-> Process-2	(PID =101, TGID = 101, PPID =100 )	:	fork()
+100's fork()	|	         	|		        |						            ||					
+..........................................................................              ||					-> Thread-1	(PID = 102, TGID = 100, PPID = 99)		:	pthread_create()
+Thread-1		|		102	|		100	|		99			            ||			
+99's 				|				|				|	                                ||			
+pthread_create()			|				|	                                ||			
+
+
+	Observation:
+		1. If 2 tasks have TGID1= TGID2 is same, then they are 2 threads (task_struct) of the same process.
+		2. If task's TGID == PID, then its a MAIN_THREAD in that THREAD_GROUP.
+		
+		3.	getpid() system_call in USER_SPACE,
+				-> return TGID.	(PID of main task)
+			
+			e.g. getpid(task_struct-4 = Thread-1)	=> TGID = 100
+						PID is common for THREAD_GROUP.
+					
+		4.	TGID is KERNEL_SPACE	=
+			PID	in	USER_SPACE
+		
+		5. If we want to get thread-id separately,
+				__get_tid()	: unique id for internal use.
+				internally used by PTHREAD_LIBRARY
+........................................................................................................................................................................................................
+
+		Problem:
+			
+			1. Scheduler NOT scheduling Process,
+					But scheduling Threads (task_struct)
+				
+					1 java program (will have 37 default internal threads for helloWorld)
+						Total task_struct = 1
+					
+					1 Programs = 1 process got 500 threads.
+						Total task_struct = 500
+			
+			2. Scheduler will have 501 tasks		
+					
+					1st process will starving for	CPU 1%.
+					2nd Process will taking 		 	CPU 99%.
+				
+					UNFAIR for 2 processes.
+			
+			3. e.g. Book Movies Queues
+					10 people belong to same group ahead of you 
+					group traveller at airport -> open one more checking counter
+			
+			4. Kernel 2.6.30	Group CFS
+					Group process on common properties.
+				- By default CPU have single RUN_QUEUE - 1							
+				- Process with same TGID are moved to new RUN_QUEUE - 2 	
+					
+			5. Group CFS
+						task1(java) : task2(c) : task3(java) : task4(c) : ...
+.........................................................................................................................................................
+																		
+										CONTAINERS 	
+								(Alternative to VIRTUALIZATION)
+																		
+			6. Kernel 2.6.24 
+								/Documentation/cgroups/cgroup.txt
+					CGROUPS introduced	for bandwidth limitation on different set of Processes grouped together.
+					(Control Group Sets)		
+						for CPU , I/O scheduling, memory, DISK, Network etc. RESOURCES.
+					
+				We as admin/users of can create separate RUN_QUEUE dynamically.
+				Tell the kernel to create RUN_QUEUE &
+					Place process-1 in RUN_QUEUE-1
+					Place process-2 in RUN_QUEUE-2
+					Place process-3 in RUN_QUEUE-3
+				
+					Set the CPU bandwidth to 33%
+				This is achieved by EXSI & Docker (Container Tool Chain)	
+				
+				CGROUPS are not only for CPU scheduling but also for I/O bandwidth.
+				
+				e.g.	Create a new RUN_QUEUE & put a new task_struct in that new RUN_QUEUE
+					$	echo browser_pid 	>	 /sys/fs/cgroups/<restype>/<userclass>/tasks
+					
+				CGROUPS introduced	for bandwidth limitation on different set of Processes grouped together.	
+				Now, its possible that these set of processes should not be aware other set of processes which are running.		
+				
+				e.g. Datacenter	
+		Problem:	One set of Processes should not be visible to other Customer's set of processes.
+		Solution:	Create namespace
+
+					1. PID is not global variable, it reside in namespace.
+					2. By default, LINUX kernel set up only 	/root 	namespace.
+						We can create a new namespace using unshare() system_call.
+						
+					3. unshare()	system_call
+							- run a program with some namespace unshared from PARENT.
+					
+					4. e.g.
+						$ unshare 	[man_do_unshare]		program		[arguments]
+							The above program will start with PID=1	under a new namespace.
+							PID = 1 (customized version of init, not root_init running on systemd)
+ 							
+					5. Using unshare() 
+							- create set of process/PID's 	unique from another SET. 	
+							- this particular namespace has  own /root/ FILE_SYSTEM.
+
+							e.g. chroot <location> 
+									unshare()
+								So /root/ directory will be different for both			
+				
+					6. Emulating multiple system to customers, while there is only one single system.
+
+					7. NAMESPACE + CGROUPS
+							solves DATACENTER problem	without yielding to sophisticated VIRTUALIZATION (complete VM - little expensive in terms of CPU resources) .
+							Set of processes in Container	( CGROUPS with NAMESPACE with their own resources).
+							
+					8. 
+					Problem with containers.
+							They should not have direct access to HARDWARE resources like Network CARD.
+					Solution:	
+							eth0, eth1 are not visible to these containers.
+							they create TUNNEL_ADAPTERS
+							TUNNEL_ADAPTERS connect virtual tunnel address which connects to the main physical interface.	
+							
+					9. 
+					Problem with Container : 	
+								- 	sharing the same KERNEL.
+								-	Loading a driver in one container which can cause some havoc can affect entire system.
+								-  not truly isolated.		
+								- 	different KERNEL version for different customers is not possible.
+								
+					Solution:
+							KVM, hypervisor KERNEL with KVM module which does hardware resources arbitration alone.
+							Allows it to run multiple kernel on top of it called Guest KERNEL.
+							
+							CPU , Memory (NUMA) arbitration.
+							
+							KVM with ubuntu, Redhat, slackware running together. 
+							But with container we can have Ubuntu with container with multiple instance of  FILE_SYSTEM & set of processes.
+							
+****************	KVM performs better with block & network I/O.
+							Lot of memory I/O opertions.
+								packet ring to tunnel adapter
+								packet ring to real adapter
+								
+							SR I/O, PCI I/O virtualization.
+								break into channels
+							
+****************	Processing problem container is better.	
+.......................................................................................................................................................................................................................................				
+
+
+
+
+
+
+
+

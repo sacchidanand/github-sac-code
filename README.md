@@ -2,24 +2,23 @@
 This is a repo created for sharing codes on following topics 
 
 
-a. Graph Traversal Algorithm
-  1. Breadth First Search (BFS)
-  2. Depth First Search   (DFS)
----------------------------------------------
+Graph Traversal Algorithm
+  a. Breadth First Search (BFS)
+  b. Depth First Search   (DFS)
 
-b. Balanced Binary Search Tree (Balanced BST)
-  1. Red Black Tree (RB TREE)
-  2. AVL Tree
----------------------------------------------
 
-c. Operating System (OS)
-  1. Loadable Kernel Module (LKM)
----------------------------------------------
+Balanced Binary Search Tree (Balanced BST)
+  a. Red Black Tree (RB TREE)
+  b. AVL Tree
 
-d. User Space API's
-  1. Socket 
-  2. pthreads
-  3. File I/O 
----------------------------------------------
+
+Operating System (OS)
+  a. Loadable Kernel Module (LKM)
+
+
+User Space API's
+  a. Socket 
+  b. pthreads
+  c. File I/O 
 
 

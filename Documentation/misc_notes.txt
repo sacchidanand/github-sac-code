@@ -1,0 +1,93 @@
+FILE I/O
+
+1. Open a file using file pointer 
+	
+  a. File-name
+		FILE *filePtr = fopen("./input.txt", "r");
+
+	b. Fd
+		int fd[2];
+		FILE *filePtr = fdopen(fd[0], "r");
+----------------------------------------------------------------------------------------------------------------------
+
+2. Read from file
+	while((fgets(line[index], MAXLENGTH, fp_input)) != NULL)
+
+	fgets() reads in at most one less than size characters from stream and stores them into the  buffer  pointed
+       to  by  s.  Reading stops after an EOF or a newline.  If a newline is read, it is stored into the buffer.  A
+       '\0' is stored after the last character in the buffer.	
+
+       gets()  and  fgets()  return  s on success, and NULL on error or when end of file occurs while no characters
+       have been read.
+----------------------------------------------------------------------------------------------------------------------
+
+IPC
+
+3. Pipe
+	int pipe(int pipefd[2]);
+	int pipe2(int pipefd[2], int flags);
+
+pipefd[0] : Read end 
+pipefd[1] : Write end
+
+data is buffered by kernel until it read by pipe read end.
+
+O_CLOEXEC : to close other open end automatically.
+O_NONBLOCK : saves call to fcntl()
+----------------------------------------------------------------------------------------------------------------------
+
+4. tcpdump for pcap file
+tcpdump -s 0 port 162 -w file.pcap
+
+B : Byte
+- : Bit
+
+0--- ----   |	BBB
+10-- ---- B | 	BB
+110- ---- BB|   B
+
+Classful  network  addresses  are  now  obsolete,  having  been superseded by Classless Inter-Domain Routing
+(CIDR), 
+which divides addresses into network and host components at arbitrary bit (rather than byte)  boundaries.
+----------------------------------------------------------------------------------------------------------
+
+
+5. Process Vs Thread
+Virtually linked dynamic shared object (VDSO)
+  - For faster system calls to architecture specific, kernel maps the system call code.
+
+#View process memory map
+  $ pmap -x/-X/-XX pid
+  $ cat /proc/pid/maps
+    RSS- resident set side
+
+  mincore() : determin whether pages are resident in memory or not
+
+This is POSIX API's, we can create our own api using CLONE.
+#pthread_ : core_function
+pthread_attr : configurable attribute
+
+USER_SPACE process will have stack (MAX = 8 MB)
+New Thread will have its private stack  (MAX = 8 MB)
+
+Total = 16 MB
+
+Clone()
+  1. copies the task_struct using CLONE_FLAG's
+  2. Deep_copy or Shallow_copy depend on FLAG.
+
+1. fork()
+    clone(  child_stack = 0,
+            flags = CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD,
+            child_tidptr = 0x828329 )
+
+2. pthread_create()
+    clone(  child_stack = 0xb75f2464  ( = #Number_1 + 8MB)
+            flags = CLONE_CHILD_CLEARTID | CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVMEM | CLONE_SETTLS ,
+            parent_tidptr = 0xb75f2ba8  )
+
+    #Number_1
+    mmap2(  NULL,   8MB,  MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK )
+...........................................................................
+
+

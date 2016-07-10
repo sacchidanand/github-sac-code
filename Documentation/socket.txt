@@ -1,0 +1,136 @@
+This file tries to capture the information about 
+Sockets API
+
+1. int sa_family_t;
+2. struct sockaddr
+3. struct sockaddr_storage
+4. struct sockaddr_in
+5. struct in_addr
+*********************************************************************************
+
+
+1. int sa_family_t;
+
+/* POSIX.1g specifies this type name for the `sa_family' member.  */
+typedef unsigned short int sa_family_t;
+
+/* This macro is used to declare the initial common members
+   of the data types used for socket addresses, 
+
+   a. struct sockaddr
+   b. struct sockaddr_in 
+   c. struct sockaddr_un  
+
+*/
+
+#define __SOCKADDR_COMMON(sa_prefix) \
+  sa_family_t sa_prefix##family
+
+#define __SOCKADDR_COMMON_SIZE  (sizeof (unsigned short int))
+..............................................................
+
+
+2. struct sockaddr
+
+/* Structure describing a generic socket address.  */
+struct sockaddr
+  {
+    __SOCKADDR_COMMON (sa_);  /* Common data: address family and length.  */
+    char sa_data[14];   /* Address data.  */
+  };
+
+>>> e.g.
+struct sockaddr
+  {
+    sa_family_t sa_family;  /* Common data: address family and length.  */
+    char sa_data[14];   /* Address data.  */
+  };
+................................................................................
+
+
+3. struct sockaddr_storage
+
+/* Structure large enough to hold any socket address (with the historical
+   exception of AF_UNIX).  We reserve 128 bytes.  */
+#define __ss_aligntype  unsigned long int
+#define _SS_SIZE  128
+#define _SS_PADSIZE (_SS_SIZE - (2 * sizeof (__ss_aligntype)))
+
+struct sockaddr_storage
+  {
+    __SOCKADDR_COMMON (ss_);  /* Address family, etc.  */
+    __ss_aligntype __ss_align;  /* Force desired alignment.  */
+    char __ss_padding[_SS_PADSIZE];
+  };
+....................................................................................
+
+
+4. struct sockaddr_in
+
+/* Structure describing an Internet socket address.  */
+struct sockaddr_in
+  {
+    __SOCKADDR_COMMON (sin_);
+    in_port_t sin_port;     /* Port number.  */
+    struct in_addr sin_addr;    /* Internet address.  */
+
+    /* Pad to size of `struct sockaddr'.  */
+    unsigned char sin_zero[sizeof (struct sockaddr) -
+         __SOCKADDR_COMMON_SIZE -
+         sizeof (in_port_t) -
+         sizeof (struct in_addr)];
+  };
+..................................................................................................
+
+
+5. struct in_addr
+
+/* Internet address.  */
+typedef uint32_t in_addr_t;
+struct in_addr
+  {
+    in_addr_t s_addr;	//32 bit unsigned int 
+  };
+
+/* Type to represent a port.  */
+typedef uint16_t in_port_t;
+..................................................................................................
+
+Data order on Internet:
+Network Byte Order i386
+Big Endian (MSB) 
+Just like the human reads and stores it in memory.
+
+123 => 1(0th) 2(1st) 3(3rd)
+
+# if __BYTE_ORDER == __BIG_ENDIAN
+/* 
+   The host byte order is the same as network byte order,
+   so these functions are all just identity.  
+*/
+
+# define ntohl(x) (x)
+# define ntohs(x) (x)
+# define htonl(x) (x)
+# define htons(x) (x)
+# else
+#  if __BYTE_ORDER == __LITTLE_ENDIAN
+#   define ntohl(x) __bswap_32 (x)
+#   define ntohs(x) __bswap_16 (x)
+#   define htonl(x) __bswap_32 (x)
+#   define htons(x) __bswap_16 (x)
+#  endif
+# endif
+#endif
+
+/* Swap bytes in 32 bit value.  */
+#define __bswap_constant_32(x) \
+     ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) |         \
+      (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
+
+
+/* Swap bytes in 16 bit value.  */
+#define __bswap_constant_16(x) \
+     ((((x) >> 8) & 0xff) | (((x) & 0xff) << 8))
+
+

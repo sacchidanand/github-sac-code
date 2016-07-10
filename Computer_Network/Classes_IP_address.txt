@@ -1,0 +1,197 @@
+Purposefully, Subnet mask is kept as 255.255.255.255 so that NID after AND will not match with any IP's NID.
+So all packet will go through default router.
+Security is provided via ACL.
+..................................................................................................................
+128 64 32 16	8 4 2 1
+IP-Address
+192.168.170.130 (1000 0010)
+					
+SM : 
+255.255.255.0
+
+DBA:
+192.168.170.255
+..................................................................................................................
+
+CIDR Subnet rules:
+1. All IP should be contiguous
+2. block size should be power of 2 
+	i.e. 2^n sizes
+3. first IP address in the block should be evenly divisible by size of the block.
+
+	1st IP host will have all 0's in host part
+
+
+Subnet Mask 
+
+1. If match, send packet to corresponding interface
+2. If more than 1 match, forward it to that interface which have longest subnets mask (1's).
+3. If no match, forward it to Default Interface.
+
+Use 2-bits from hots-ID's 8 bits for creating 4 subnets.
+Divide the network into 4 equal parts : 4 Subnets with 64 Ip-address
+200.1.2.0  
+It depends on perspective, looking form inside/outside the network.
+
+#Fixed length Subnet Mask:
+255.255.255.192 
+           .(10 0000 00) 
+
+#Routing table:
+Subnet Mask     | N/W-ID      | Interface
+255.255.255.192 | 200.1.2.0   |   a
+255.255.255.192 | 200.1.2.64  |   b
+255.255.255.192 | 200.1.2.128 |   c
+255.255.255.192 | 200.1.2.192 |   d
+#default entry
+0.0.0.0         |0.0.0.0      |   e
+
+
+
+#Variable Length Subnet Mask
+128, 64, 64
+255.255.255.128 (200.1.2.0)       a
+255.255.255.192 (200.1.2.128)     b
+255.255.255.192 (200.1.2.192)     c
+#default entry
+0.0.0.0         |0.0.0.0      |   d
+                          
+1. we can choose combination here
+
+
+
+
+
+
+
+.................................................................
+1st IP address 10.0.0.0 is reserved for IP address of network ID.
+
+Casting:
+
+1. Unicasting 
+  10.1.1.1 to 20.2.2.2
+
+2. Broadcast 
+  a. Limited
+  b. Direct
+
+a. Limited Broadcast (all 1's in DST-Addr)
+  11.1.2.3 to all host in 11.0.0.0. network 
+  e.g.  Msg | Source-Addr | 11111111111111111111111 
+                            (255.255.255.255)
+
+b. Directed Broadcast   (all host in some other network) 
+  11.1.2.3 to 20.0.0.0
+  e.g.  Msg | Source-Addr | 20.1111111111111111111 
+                            (20.255.255.255)
+  
+
+........................................................
+
+1. Class A 0
+    0,127 reserve (1-126)
+2. B 10   
+    (128-191)
+3. C
+    (192-223)
+
+4. D
+    Mulitcast
+    (224-239)
+
+5. E 
+  research purpose    
+  (240-255)
+  Nothing is applicable here like LBA, DBA, NID part.
+
+.............................
+
+Number of host = #IP-Address - 2 
+=   2^24 - 2 
+ 
+Direct Broadcast Address, all 1's 
+Network ID  all 0's  
+
+
+######################################################################################
+
+Supernetting or Aggregation
+
+1. all the network should be contiguous.
+2. Size of all network should be same & power of 2.	(2^n)
+3. 1st network IP-address should be divisible by Total Size of the Supernet. (2^M)
+
+
+e.g.
+
+200.1.0.0/24
+200.1.1.0/24
+200.1.2.0/24
+200.1.3.0/24
+
+Above subnets satisfy all 3 property.
+
+Subnet 
+NID + SID : HID
+
+Supernet Mask: 	(2parts)
+Fixed 1's :: Variable 0's
+
+e.g 1)
+
+200.1.000000	00.00000000
+200.1.000000	01.00000000
+200.1.000000	10.00000000
+200.1.000000	11.00000000
+---------------------------
+255.255.11111100.00000000
+
+i.e. 
+255.255.252.0
+
+1st address is going to be the SuperNet ID
+
+
+short-cut to find Super-net Mask
+1. Sum of all network sizes
+	2^8 + 2^8 + 2^8 + 2^8 = 4 * (2^8)
+= 2^10
+
+2. Supernet mask will 2^22 SupernetMask
+	10 bits for host ID
+
+3. Now routing Table will contain one entry instead of 4
+
+200.1.0.0    |    255.255.252.0     |     a
+
+///////////////////////////////////////////////////////////////////
+e.g. 2) 
+			
+2^8 * 2^4
+=2^12
+
+200.1.32.0/24
+200.1.33.0/24
+200.1.47.0/24
+
+
+200.1.	32.	 00000000
+	00010000.00000000
+	00000000.00000000
+--------------------------
+	    0000.00000000
+Now all 3 rules satisfied, last 12 bits are zero in 1st IP address, that means 1st IP-address is evenly divisible by whole supernet size.
+
+
+Supernet Mask:
+200.1.----****.********
+11111111.11111111.11110000.00000000
+255.255.240.0
+
+SuperNet ID :
+200.1.32.0/20
+
+
+
+

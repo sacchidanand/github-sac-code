@@ -535,7 +535,6 @@ void basic_input()
 /* main function() */
 int main()
 {
-
   initial_values();
   basic_input();
 

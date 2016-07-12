@@ -414,7 +414,8 @@ int client_function(char argv[20],char packet_data2[1000])
 }
 
 /* receive_1() */
-void *receive_1(void*)
+
+void* receive_1(void *data)
 {
   int count1=0,size1=0;
   for(count1=0; ; count1++) {		
@@ -427,18 +428,13 @@ void *receive_1(void*)
         save_game_state_variables();
     }
 
-    printf("\n \ntotal_players_players=%f 
-        \tlife_status[%d]=%d  %d %d %d \n 
-        \tdead_flag[0]=%d %d %d %d \n\n  ",
-        total_players, (player_id-1), life_status[0], life_status[1], 
-        life_status[2], life_status[3], dead_flag[0], dead_flag[1], 
-        dead_flag[2], dead_flag[3]);	
+    printf("\n \ntotal_players_players=%f \tlife_status[%d]=%d  %d %d %d \n \tdead_flag[0]=%d %d %d %d \n\n  ", total_players, (player_id-1), life_status[0], life_status[1], life_status[2], life_status[3], dead_flag[0], dead_flag[1], dead_flag[2], dead_flag[3]);	
     usleep(10000);	
   }//for-end
 }
 
-/*send_1()*/
-void* send_1(void*)
+/* send_1() */
+void* send_1(void *data)
 {
   int count2=0;
 

@@ -3,16 +3,16 @@ SERVER=127.0.0.1
 all : server client
 
 server: dummy
-	g++ -o m_server m_server.cpp -lglut -lpthread
+	g++ -o server mserver.c -lglut -lpthread -g
 
 client: dummy
-	g++ -o m_client1 m_client1.cpp -lglut -lpthread
+	g++ -o client mclient.c -lglut -lpthread -lGL -g
 
 run: dummy
-	./m_server
+	./server
 
 ping_pong: dummy
-	./m_client1 $(SERVER)
+	./client $(SERVER)
 
 runauto: dummy
 	make ping_pong &

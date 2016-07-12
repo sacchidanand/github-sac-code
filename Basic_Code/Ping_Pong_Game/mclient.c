@@ -1,6 +1,6 @@
 #include "header.h"
-#include "stdbool.h"
-#include "pthread.h"
+#include <stdbool.h>
+#include <pthread.h>
 
 void timer();
 void reshape( GLsizei width, GLsizei height );
@@ -957,16 +957,16 @@ void display(void)
 
 }
 
-//  ** main Function  **
+/* main Function  */
 int main(int argc,char *argv[])
 {
-  glutInit( &argc, argv );
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-    glutInitWindowSize( g_width, g_height );
-    glutInitWindowPosition( 300, 300 );
-    glutCreateWindow("PING-PONG");
+  glutInit(&argc, argv );
+  glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+  glutInitWindowSize( g_width, g_height );
+  glutInitWindowPosition( 300, 300 );
+  glutCreateWindow("PING-PONG");
 
-    init();
+  init();
   glutDisplayFunc(display);
   glutReshapeFunc(reshape);
   //glutKeyboardFunc(keyPressed); // Tell GLUT to use the method "keyPressed" for key presses  
@@ -977,10 +977,9 @@ int main(int argc,char *argv[])
 
   glutIdleFunc(display);
 
-  if(start==0)
-  {
+  if(start==0) {
     // Dont touch this line otherwise connection time-out will appear
-    strcpy(ip_addr,argv[1]);
+    strcpy(ip_addr, argv[1]);
 
     begin();
     control();
@@ -997,7 +996,6 @@ int main(int argc,char *argv[])
     printf("Client-sockfd1 closing is failed!\n");
   else
     printf("Client-sockfd1 successfully closed!\n");
-
 
   return 0;
 }

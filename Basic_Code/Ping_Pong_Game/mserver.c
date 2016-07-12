@@ -1,5 +1,5 @@
 #include "header.h"
-#include "pthread.h"
+#include <pthread.h>
 
 int ball_flag[4]={1,1,1,1},player1_life[4]={3,3,3,3};
 GLsizei g_width = 600;

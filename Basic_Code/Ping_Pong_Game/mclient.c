@@ -153,12 +153,12 @@ void check_life1()
   }
 
   /*
-  if(yb4-7<=-90 && (xb4<p1[0] || xb4>p1[2])  && ball_flag[3]==1  )
-  {
-    player_life[0]--;
-    ball_flag[3]=0;
-  }
-  */	
+     if(yb4-7<=-90 && (xb4<p1[0] || xb4>p1[2])  && ball_flag[3]==1  )
+     {
+     player_life[0]--;
+     ball_flag[3]=0;
+     }
+     */	
 
   if(player_life[0]<=0)	{
     life_status[0]=0;
@@ -201,12 +201,12 @@ void check_life2()
   }	
 
   /*
-  if((xb4+7>=90 && (yb4<p2[1] || yb4>p2[3])) && ball_flag[3]==1)
-  {
-    player_life[1]--;
-    ball_flag[3]=0;			
-  }	
-  */
+     if((xb4+7>=90 && (yb4<p2[1] || yb4>p2[3])) && ball_flag[3]==1)
+     {
+     player_life[1]--;
+     ball_flag[3]=0;			
+     }	
+     */
 
   if(player_life[1]==0)	{
     life_status[1]=0;	
@@ -223,9 +223,9 @@ void check_life2()
     ball_flag[5]=1;
 
   /*
-  if(xb4+7<90)
-    ball_flag[3]=1;
-  */
+     if(xb4+7<90)
+     ball_flag[3]=1;
+     */
 
 }
 
@@ -250,11 +250,11 @@ void check_life3()
   }	
 
   /*
-  if((yb4+7>=90 && (xb4<p3[0] || xb4>p3[2])) && ball_flag[3]==1) {
-    player_life[2]--;
-    ball_flag[3]=0;			
-  }	
-  */
+     if((yb4+7>=90 && (xb4<p3[0] || xb4>p3[2])) && ball_flag[3]==1) {
+     player_life[2]--;
+     ball_flag[3]=0;			
+     }	
+     */
 
   if(player_life[2]==0)	{
     life_status[2]=0;	
@@ -294,11 +294,11 @@ void check_life4()
   }	
 
   /*
-  if((xb4-7<=-90 && (yb4<p4[0] || yb4>p4[2])) && ball_flag[3]==1) {
-    player_life[3]--;
-    ball_flag[3]=0;			
-  }	
-  */
+     if((xb4-7<=-90 && (yb4<p4[0] || yb4>p4[2])) && ball_flag[3]==1) {
+     player_life[3]--;
+     ball_flag[3]=0;			
+     }	
+     */
 
   if(player_life[3]==0)	{
     life_status[3]=0;
@@ -703,104 +703,107 @@ void keySpecialOperations(void)
 }//keySpecialOperations-end
 
 /*
-void reshape(int w, int h)
+   void reshape(int w, int h)
+   {
+   glViewport(0, 0, (GLsizei) w, (GLsizei) h);
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   gluOrtho2D(0.0, (GLdouble) w, 0.0, (GLdouble) h);
+   }
+   */
+
+void reshape(GLsizei w, GLsizei h) 
 {
-  glViewport(0, 0, (GLsizei) w, (GLsizei) h);
+  GLfloat aspectRatio;
+  h=(!h?1:h);
+  glViewport(0,0,w,h);
+
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluOrtho2D(0.0, (GLdouble) w, 0.0, (GLdouble) h);
-}
-*/
 
-void reshape(GLsizei w, GLsizei h) {
-  
-    GLfloat aspectRatio;
-    h=(!h?1:h);
-    glViewport(0,0,w,h);
-    
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    
-    aspectRatio =(GLfloat)w / (GLfloat)h;
-    
-   
-    if(w<=h) {
-      g_height =100.0/aspectRatio;
-        g_width=100.0;
-        glOrtho(-100.0,100.0,-100/aspectRatio, 100.0/aspectRatio, 1.0,-1.0);
-    }
-    else  {
-      glOrtho(-100.0*aspectRatio,100.0*aspectRatio,-100, 100.0, 1.0,-1.0);
-        g_width = 100.0* aspectRatio;
-        g_height =100.0;
-    }
-  
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+  aspectRatio =(GLfloat)w / (GLfloat)h;
+
+  if(w<=h) {
+    g_height =100.0/aspectRatio;
+    g_width=100.0;
+    glOrtho(-100.0,100.0,-100/aspectRatio, 100.0/aspectRatio, 1.0,-1.0);
+  }
+  else {
+    glOrtho(-100.0*aspectRatio,100.0*aspectRatio,-100, 100.0, 1.0,-1.0);
+    g_width = 100.0* aspectRatio;
+    g_height =100.0;
+  }
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
   glutPostRedisplay();
 }
 
-
+/* Drawing balls */
 void draw_circle(float h,float k)
 {
-  // Drawing balls 
   int i=0;
 
   glBegin(GL_POLYGON); 
-    glColor3f(1.0f,0.0f,.0f);
-    //glTranslatef((GLfloat)xb1,(GLfloat)yb1,0.0);
-    for (i = 0; i < circle_points; i++) 
-    {    
-      angle = 2*PI*i/circle_points; 
-      glVertex2f(h+cos(angle)*radius,k+ sin(angle)*radius);
-    } 
-  
-    glEnd();
-    //printf("\n\nPlayer No :%d  inside draw Circle : xb1=%f \t yb1=%f",player_id,xb1,yb1);
-    printf("\n P = %d",player_id);
+  glColor3f(1.0f,0.0f,.0f);
+  /* glTranslatef((GLfloat)xb1,(GLfloat)yb1,0.0); */
+  for (i = 0; i < circle_points; i++) {    
+    angle = 2*PI*i/circle_points; 
+    glVertex2f(h+cos(angle)*radius,k+ sin(angle)*radius);
+  } 
 
-  if(total_players==1 || total_players==2 || total_players==3 || total_players==4)
+  glEnd();
+  //printf("\n\nPlayer No :%d  inside draw Circle : xb1=%f \t yb1=%f",player_id,xb1,yb1);
+  printf("\n P = %d", player_id);
+
+  if(total_players==1 || total_players==2 || total_players==3 || total_players==4){
     check_life1();
-  if(total_players==2 || total_players==3 || total_players==4)
+  }
+
+  if(total_players==2 || total_players==3 || total_players==4){
     check_life2();
+  }
 
-  if(total_players==3 || total_players==4)
+  if(total_players==3 || total_players==4){
     check_life3();
+  }
 
-  if(total_players==4)
+  if(total_players==4){
     check_life4();
+  }
 
   printf("\n \ndead Man : %d  total_players=%d \tlife_status[%d]=%d  %d %d %d \n \tdead_flag[0]=%d %d %d %d \n\n%d \t %d\t %d\t %d\t  ",dead_player,total_players,(player_id-1),life_status[0],life_status[1],life_status[2],life_status[3],dead_flag[0],dead_flag[1],dead_flag[2],dead_flag[3],player_life[0],player_life[1],player_life[2],player_life[3]);	
 
   //check_life1();
-  //	//////printf("\n *********Player1 life = %d",player1_life);
+  //printf("\n *********Player1 life = %d",player1_life);
+
 }
 
 void draw_border()
 {
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColor3f(0.0, 1.0, 0.0);	//Red Paddle
+  glColor3f(0.0, 1.0, 0.0);	//Red Paddle
 
-  // next code will draw a line at starting and ending coordinates specified by glVertex3f
-  //line 3
+  /* next code will draw a line at starting and ending coordinates specified by glVertex3f */
+  /* Line 3 */
   glBegin(GL_LINES);
   glVertex3f(-100.0f, 90.0f, 0.0f); // origin of the line
   glVertex3f(100.0f, 90.0f, 0.0f); // ending point of the line
   glEnd( );
 
-  // line 1 
+  /* Line 1 */
   glBegin(GL_LINES);
   glVertex3f(-100.0f, -90.0f, 0.0f); // origin of the line
   glVertex3f(100.0f, -90.0f, 0.0f); // ending point of the line
   glEnd( );
 
-  // Line 2
+  /* Line 2 */
   glBegin(GL_LINES);
   glVertex3f(90.0f, 100.0f, 0.0f); // origin of the line
   glVertex3f(90.0f, -100.0f, 0.0f); // ending point of the line
   glEnd( );
 
-  // next code will draw a line at starting and ending coordinates specified by glVertex3f
+  /* next code will draw a line at starting and ending coordinates specified by glVertex3f */
   glBegin(GL_LINES);
   glVertex3f(-90.0f, 100.0f, 0.0f); // origin of the line
   glVertex3f(-90.0f, -100.0f, 0.0f); // ending point of the line
@@ -814,25 +817,26 @@ void draw_brick(int paddle_no)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glColor3f(0.8,0.1,0.1);
 
-  //if(dead_flag[paddle_no-1]==1  && paddle_no==1)	
-  if(paddle_no==1)	
-    glRectf(-100.0,-100.0,100,-90);
+  /* if(dead_flag[paddle_no-1]==1  && paddle_no==1)	*/
+  if(paddle_no==1){
+    glRectf(-100.0, -100.0, 100, -90);
+  }
+  else if(paddle_no==2)	{
+    glRectf(90.0, -100.0, 100, 100);
+  }
+  else if(paddle_no==3)	{
+    glRectf(-100.0, 90.0, 100, 100);
+  }
+  else if(paddle_no==4)	{
+    glRectf(-100.0, -100.0, -90.0, 100);
+  }
 
-  else if(paddle_no==2)	
-    glRectf(90.0,-100.0,100,100);
-
-
-  else if(paddle_no==3)	
-    glRectf(-100.0,90.0,100,100);
-
-
-  else if(paddle_no==4)	
-    glRectf(-100.0,-100.0,-90.0,100);
 }
 
 void displayString(float x, float y, const char* string)
 {
-  //gfColor3f(0,0,0);//text color
+  /* text color */
+  //gfColor3f(0,0,0);
   glRasterPos2f(x, y);
   glColor4f(1.0f, 0.0f, 1.0f, 0.5f);
   //for(int i=0;str[i]!='\0';i++)
@@ -843,121 +847,104 @@ void display(void)
 {
   int c=0;
 
-    //glPushMatrix();	
-    //keyOperations();
-    keySpecialOperations();
-    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColor3f(0.0, 0.0, 0.0);	//Green Paddle
-
+  //glPushMatrix();	
+  //keyOperations();
+  keySpecialOperations();
+  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glColor3f(0.0, 0.0, 0.0);	//Green Paddle
 
   //Drawing border
   draw_border();
 
   // Drawing paddles
   glRectf(p1[0],p1[1],p1[2],p1[3]);
-  if(player_life[0]>0)
-  {
+
+  if(player_life[0]>0) {
     sprintf(l1,"%d",player_life[0]);
     displayString(p1[0]+17,-80,l1);
   }
 
-  if(total_players>=2)
-  {
+  if(total_players>=2) {
     glRectf(p2[0],p2[1],p2[2],p2[3]);
 
-    if(player_life[1]>0)
-    {
+    if(player_life[1]>0) {
       sprintf(l2,"%d",player_life[1]);
-        displayString(80,p2[1]+17,l2);
-    }
-
+      displayString(80,p2[1]+17,l2);
+    } 
   }
-  else 
+  else {
     glRectf(90.0,-100.0,100,100);
+  }
 
-
-  if(total_players>=3)
-  {
+  if(total_players>=3) {
     glRectf(p3[0],p3[1],p3[2],p3[3]);
-      if(player_life[2]>0 && total_players>=3)
-      {
-        sprintf(l3,"%d",player_life[2]);
-        displayString(p2[1]+17,80,l3);
-      }
+
+    if(player_life[2]>0 && total_players>=3) {
+      sprintf(l3,"%d",player_life[2]);
+      displayString(p2[1]+17,80,l3);
+    }
   }
-  else
+  else{
     glRectf(-100.0,90.0,100,100);
-
-
-  if(total_players==4)
-  {	
-    glRectf(p4[0],p4[1],p4[2],p4[3]);
-      if(player_life[3]>0 && total_players>=4)
-      {
-        sprintf(l4,"%d",player_life[3]);
-        displayString(-80,p4[1]+17,l4);
-      }	
   }
-  else
+
+  if(total_players==4) {	
+    glRectf(p4[0],p4[1],p4[2],p4[3]);
+
+    if(player_life[3]>0 && total_players>=4) {
+      sprintf(l4,"%d",player_life[3]);
+      displayString(-80,p4[1]+17,l4);
+    }
+  }
+  else{
     glRectf(-100.0,-100.0,-90.0,100);
+  }
 
-
-
-  //drawing balls
+  /* drawing all the balls */
   draw_circle(xb1,yb1);
-
   draw_circle(xb2,yb2);
+  draw_circle(xb3,yb3); 
 
-  draw_circle(xb3,yb3);
-
-
-
-  // drawing bricks
-
-  if(dead_flag[0]==1)
-  {
+  /* drawing bricks */
+  if(dead_flag[0]==1) {
     //glColor3f(0.8,0.1,0.1);
     glRectf(-100.0,-100.0,100,-90);
-
     //draw_brick(1);
   }
 
-  if(dead_flag[1]==1)
-  {			
+  if(dead_flag[1]==1) {			
     //glColor3f(0.8,0.1,0.1);
     glRectf(90.0,-100.0,100,100);
-
     //draw_brick(2);
-
-
   }	
-  if(dead_flag[2]==1)
-  {	
+
+  if(dead_flag[2]==1) {	
     //glColor3f(0.8,0.1,0.1);
     glRectf(-100.0,90.0,100,100);
     //draw_brick(3);
   }
-  if(dead_flag[3]==1)
-  {			
+
+  if(dead_flag[3]==1) {			
     //glColor3f(0.8,0.1,0.1);
     glRectf(-100.0,-100.0,-90.0,100);
-    //draw_brick(4);
-
+    //draw_brick(4); 
   }
 
-  // ** last changes at 1.04
   //timer();
   //check_life1();
   //glPopMatrix();
 
-  
-    /* swap buffers to display the frame */
-    glutSwapBuffers();
+  /* swap buffers to display the frame */
+  glutSwapBuffers();
   usleep(30000);
 
 }
 
-/* main Function  */
+/* main Function  
+ *  to run client use following command format
+ *  ./client 127.0.0.1
+ *  ./client <server-ip-addr>
+ */
 int main(int argc,char *argv[])
 {
   glutInit(&argc, argv );
@@ -972,30 +959,31 @@ int main(int argc,char *argv[])
   //glutKeyboardFunc(keyPressed); // Tell GLUT to use the method "keyPressed" for key presses  
   //glutKeyboardUpFunc(keyUp); // Tell GLUT to use the method "keyUp" for key up events  
 
-  glutSpecialFunc(keySpecial); // Tell GLUT to use the method "keySpecial" for special key presses  
-  glutSpecialUpFunc(keySpecialUp); // Tell GLUT to use the method "keySpecialUp" for special up key events  
+  /* Tell GLUT to use the method "keySpecial" for special key presses */
+  glutSpecialFunc(keySpecial); 
+  /* Tell GLUT to use the method "keySpecialUp" for special up key events */
+  glutSpecialUpFunc(keySpecialUp); 
 
   glutIdleFunc(display);
 
   if(start==0) {
-    // Dont touch this line otherwise connection time-out will appear
+    /* Dont touch this line otherwise connection time-out will appear */
     strcpy(ip_addr, argv[1]);
-
     begin();
     control();
-
     start=1;		
   }
-
 
   usleep(100);
   glutMainLoop();
 
-  // closing socket
-  if (close(sockfd1) != 0)
+  /* closing socket */
+  if (close(sockfd1) != 0){
     printf("Client-sockfd1 closing is failed!\n");
-  else
+  }
+  else{
     printf("Client-sockfd1 successfully closed!\n");
+  }
 
   return 0;
 }

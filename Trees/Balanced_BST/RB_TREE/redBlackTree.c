@@ -1,3 +1,30 @@
+/*
+ * Red-Black Tree Implementation in c
+ * 
+ * References:
+ * https://en.wikipedia.org/wiki/Red%E2%80%93black_tree
+ * https://www.youtube.com/watch?v=CTvfzU_uNKE
+ * 
+ * Author : Sacchidanand Bhavari
+ * Email : sacchidanand.b@gmail.com 
+ *
+ * In addition to the requirements imposed on a binary search tree the following must be satisfied by a red–black tree:
+ *
+ * 1. A node is either red or black.
+ * 2. The root is black. This rule is sometimes omitted. 
+ *    Since the root can always be changed from red to black, but not necessarily vice versa, 
+ *    this rule has little effect on analysis.
+ * 3. All leaves (NIL) are black.
+ * 4. If a node is red, then both its children are black.
+ * 5. Every path from a given node to any of its descendant NIL nodes contains the same number of black nodes. 
+ *    
+ * Black-height of RB Tree: 
+ * The number of black nodes from the root to a node is the node's black depth; 
+ * the uniform number of black nodes in all paths from root to the leaves 
+ * is called the black-height of the red–black tree.
+ *
+ */
+
 #include<stdlib.h>
 #include<stdio.h>
 #define TRUE 1
@@ -19,6 +46,7 @@ typedef struct node node;
 node* getNewNode(int data);
 node* uncle(node *x);
 node* grandParent(node *x);
+
 node* insert(node *x, int data);
 node* bst_insert(node* x, node **new, int data);
 node* insert_case1(node *root, node **n);
@@ -26,6 +54,7 @@ node* insert_case2(node *root, node **n);
 node* insert_case3(node *root, node **n);
 node* insert_case4(node *root, node **n);
 node* insert_case5(node *root, node **n);
+
 void preOrder(node *root);
 void inOrder(node *root);
 node* rotate_right(node *p);
@@ -41,6 +70,7 @@ int is_leaf(node *n);
 node* sibling(node *n);
 void replace_node(node **n, node **child);
 void findDeleteNode(node *root, node **new, int data);
+
 node* delete(node *root, int data);
 node* delete_one_child(node *root, node **n);
 node* delete_case1(node *root, node **n);
@@ -50,10 +80,12 @@ node* delete_case4(node *root, node **n);
 node* delete_case5(node *root, node **n);
 node* delete_case6(node *root, node **n);
 
+/* main function : RB Tree */
 int main()
 {
   node *root=NULL, *ans=NULL;
   int x,n,i,op;
+
   do
   {
     printf("\n1)Create:");
@@ -86,7 +118,8 @@ int main()
                scanf("%d",&x);
                root = delete(root,x);
                break;
-      case 4:  printf("\nPreorder sequence:\n");
+      case 4:  printf("\n0:RED 1:BLACK");
+               printf("\nPreorder sequence:\n");
                preOrder(root);
                printf("\n\nInorder sequence:\n");
                inOrder(root);
@@ -113,6 +146,7 @@ int main()
   return 0;
 }
 
+/* node is leaf ? */
 int is_leaf(node *n)
 {
   if(n != NULL && n->right == NULL && n->left == NULL) 
@@ -121,12 +155,14 @@ int is_leaf(node *n)
     return FALSE;
 }
 
+/* Find node pointer */
 node* find(node* root, int data)
 {
   if(root == NULL)
     return NULL;
 
   node* p = root;
+
   while(p != NULL)
   {
     if(data < p->data)
@@ -140,9 +176,10 @@ node* find(node* root, int data)
       printf("\n Error : Data not found in tree \n");
       return NULL;
     }
-  }
+  }//while-end
 }
 
+/* return the sibling node */
 struct node *sibling(struct node *n)
 {
   if ((n == NULL) || (n->parent == NULL))
@@ -153,16 +190,17 @@ struct node *sibling(struct node *n)
     return n->parent->left;
 }
 
-int isBlack(node *s)
-{
+/* Color of node 's' is BLACK ? */
+int isBlack(node *s) {
   return (((s!= NULL) && (s->color == BLACK)) || (s == NULL));
 }
 
-int isRed(node *s)
-{
+/* Color of node 's' is BLACK ? */
+int isRed(node *s) {
   return ((s!= NULL) && (s->color == RED));
 }
 
+/* RB TREE delete a node: entry point */
 node* delete(node *root, int data)
 {
   node *temp =NULL, *n = NULL;
@@ -390,6 +428,7 @@ node* delete_case6(node *root, node **n)
   return root; 
 }
 
+/* GrandParent of node-x  */
 node* grandParent(node *x)
 {
   if(x !=NULL && x->parent !=NULL)
@@ -398,9 +437,11 @@ node* grandParent(node *x)
     return NULL;
 }
 
+/* Uncle of node-x  */
 node* uncle(node *x)
 {
   node *g = grandParent(x);
+
   if(x!= NULL && g != NULL)
   {
     if(x->parent == g->left)
@@ -412,6 +453,7 @@ node* uncle(node *x)
     return NULL;
 }
 
+/* Create a new Node */
 node* getNewNode(int data)
 {
   node *p;
@@ -424,12 +466,17 @@ node* getNewNode(int data)
   return p;
 }
 
+/* Insert a new node in RB Tree */
 node* insert(node *root, int data)
 {
   node *new = NULL;
+
+  //BST insert 
   root = bst_insert(root, &new, data);
 
-  if(new != NULL){
+  //check for RB TREE Properties
+  if(new != NULL)
+  {
     root = insert_case1(root, &new);
     root->color = BLACK;
   }
@@ -438,9 +485,11 @@ node* insert(node *root, int data)
   return root;
 }
 
+/* BST Insert */
 node* bst_insert(node *root, node **new, int data)
 {
   node *newNode = NULL;
+
   if(root == NULL) {
     newNode = getNewNode(data);
     root = newNode;
@@ -454,6 +503,7 @@ node* bst_insert(node *root, node **new, int data)
     root->right = bst_insert(root->right, new, data);
     root->right->parent = root;
   }
+
   return root;
 }
 
@@ -561,6 +611,7 @@ node* insert_case5(node *root, node **n)
   return root;
 }
 
+/* Left-Rotate Operation for RB Tree*/
 node* rotate_left(node *p)
 {
   node *g, *n,*saved_left_n, *saved_p;
@@ -593,6 +644,7 @@ node* rotate_left(node *p)
   }
 }
 
+/* Right-Rotate Operation for RB-TREE */
 node* rotate_right(node *p)
 {
   node *g, *n, *saved_right_n, *saved_p;
@@ -625,6 +677,7 @@ node* rotate_right(node *p)
   }
 }
 
+/* L-D-R Print Tree data in In-Order Traversal */
 void inOrder(node *root)
 {
   if(root != NULL)
@@ -635,6 +688,7 @@ void inOrder(node *root)
   }
 }
 
+/* D-L-R : Print Tree data in Pre-Order Traversal */
 void preOrder(node *root)
 {
   if(root!=NULL)
@@ -645,6 +699,7 @@ void preOrder(node *root)
   }
 }
 
+/* Find node containing MIN value is subtree rooted at p */
 node* findMin(node *p)
 {
   if(p==NULL)
@@ -656,6 +711,7 @@ node* findMin(node *p)
   return p;  
 }
 
+/* Find node containing MAX value is subtree rooted at p */
 node* findMax(node *p)
 {
   if(p==NULL)
@@ -667,6 +723,7 @@ node* findMax(node *p)
   return p;  
 }
 
+/* Get successor for node containing data */
 node* getSuccessor(node * root, int data)
 {
   node *current = find(root, data);
@@ -694,6 +751,7 @@ node* getSuccessor(node * root, int data)
   return successor;
 }
 
+/* Get pre-decessor for node containing data */
 node* getPredecessor(node * root, int data)
 {
   node *current = find(root, data), *ancestor = NULL, *predecessor = NULL;

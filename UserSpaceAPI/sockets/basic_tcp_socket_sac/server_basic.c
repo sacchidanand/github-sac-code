@@ -10,6 +10,7 @@
 //#include<netdb.h>
 #define MAXBUFFERSIZE 100
 #define PORT 7777
+#define NUMBEROFCONNECTION 4
 
 int main(int argc, char *argv[])
 {
@@ -28,7 +29,7 @@ int main(int argc, char *argv[])
    */
   serverSocketNumber = socket(PF_INET, SOCK_STREAM, 0);
   printf("\n socket() created ! (PF_INET, SOCK_STREAM, 0-TCP) ");
-  sleep(3);
+  //sleep(3);
 
   /* Configure settings of the Server Address Structure 
    *  IP + PORT 
@@ -62,18 +63,18 @@ int main(int argc, char *argv[])
     printf("\n Error in binding socket <-> sockaddr, \n no socket created");
   else
     printf("\n bind() serverSocketNumber=%d binded to serverSocketAddress !",serverSocketNumber);
-  sleep(3);
+  //sleep(3);
   
   /* listen(on Server-Socket-Number, #connections ) 
    * 2 max connection request queued 
    * 2 clients can be queued
    * 3rd client will be dropped from serving request*/
-  if(0 == listen(serverSocketNumber, 2))
+  if(0 == listen(serverSocketNumber, NUMBEROFCONNECTION))
     printf("\n listen()... Server Socket is waiting/Blocking \n ");
   else
     printf("\n Something gone wrong, error happend in listen(socket, connections) call \n might be 3rd connection is not allowed to connect");
 
-  sleep(3);
+  //sleep(3);
 
   /* Accept call() will keep list of clients sockets 
    * creates new sockets for incoming connections
@@ -96,7 +97,7 @@ int main(int argc, char *argv[])
   strcpy(buffer, "Hello message from server to client !");
   printf("\n send() sending buffer from server to client ");
   send(newClientSocketNumber, buffer, strlen(buffer), 0);
-  sleep(3);
+  //sleep(3);
 
   printf("\n Server successfully sends out the data to client\n\n Server exiting ...\n\n");
 

@@ -151,9 +151,32 @@ Ack              |    Independent|    Cumulative| Independent|
 .................|...............|..............|............|       
 
 
+#######################################################################
 
+DNS & DHCP
 
+DNS
+1. Convert host.domain.local resolves to 192.168.10.10
+2. Different Record Type
 
+Type A - IPv4 
+Type AAA - IPv6
+NS - List name server for the zone
+PTR - Reverse lookup of DNS (IP to domain name)
+CNAME - alias name ( pointing www.domain.com to blog.hostspot.com)
+---------------------------------------------------------------------
 
+DHCP Pool
+
+1. Define a Subent
+2. Default Router
+3. DNS Server
+4. Search Domain
+
+Add Exclusions
+1. Avoid assign DHCP Address to the host with static IP addresses.
+
+DHCP Reservations
+1. We can allocate the same ip each time from the DHCP pool.
 
 

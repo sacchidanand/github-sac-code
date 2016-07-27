@@ -1,0 +1,46 @@
+What is the prouct 
+Work environment
+Future plan
+
+api 
+	 - 	Notification 
+	 - 	Messaging Queue (Observer Pattern)
+	 - 	Scalability (Horizontal - Partitioning, Vertical - )
+	 - 	Hashing algorithm
+	 - 	REST API
+	 - 	Cassandra
+	 - 	REDIS
+	 
+Scaling Up (vertical scaling) :– increasing the number CPUs or adding faster CPUs on a single box.
+Scaling Out (horizontal scaling) :– increasing the number of boxes.	 
+
+Database can be split vertically (Partitioning) or horizontally (Sharding).
+
+Vertically splitting (Partitioning) :– Database can be split into multiple loosely coupled sub-databases based of domain concepts. Eg:– Customer database, Product Database etc. Another way to split database is by moving few columns of an entity to one database and few other columns to another database. Eg:– Customer database , Customer contact Info database, Customer Orders database etc.
+
+Horizontally splitting (Sharding) :– Database can be horizontally split into multiple database based on some discrete attribute. Eg:– American Customers database, European Customers database.
+.....................................................................................................................................................
+
+
+Related with projects , java & related technologies.
+Telecom domain fundamentals.
+Details about various projects especially related with Telecom.
+
+Java multithreading,
+ java collections, 
+ some algoritms, 
+
+Exception handling.
+Servlet life cycle, 
+session managements, 
+jsp lifecycle. 
+
+Design patterns.
+	Singleton , 
+	Factory , 
+	strategy , 
+
+Three tier architecture,
+Model view Controller Architecture.
+
+Role expectations, salary Expetations.  

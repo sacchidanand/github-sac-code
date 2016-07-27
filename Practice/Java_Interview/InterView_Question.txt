@@ -2,6 +2,20 @@ What is the prouct
 Work environment
 Future plan
 
+web applications utilizing Web 2.0 technologies 
+- Webservices,, html, php, restfull, web socket, javascript, css
+experience with database-driven web technologies to work on high volume, high- availability, large-scale public facing websites.
+*Must have worked on creating end to end enterprise applications
+
+*Must have strong experience in Object Oriented Technologies (Java)
+factory pattern
+	- instantiating object 
+	- full control & assigning it
+
+dependency injection
+	- @annotate or XML 
+	- run time bounding
+
 api 
 	 - 	Notification 
 	 - 	Messaging Queue (Observer Pattern)

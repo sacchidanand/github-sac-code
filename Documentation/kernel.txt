@@ -1,0 +1,19 @@
+schedule()
+
+1. timer scheduler_tick() 
+
+2. TIF_NEED_RESCHED(set by timer tick) checked on 
+    INTR & User space return path
+
+3. Explicit blocking
+    itself takes out of run queue
+    call directly to schedule()
+.............................................................................
+    
+Scheduling algorithm? FIFO, SCHED_RR, CFS (RB Tree with virtual_run_time)  
+        CRD  : CR7
+            
+        cfs_rq  - SCHED_BATCH, SCHED_OTHER, SCHED_IDLE
+        realtime_rq - SCHED_RR, SCHED_FIFO
+        deadline_rq - SCHED_DEADLINE
+                           

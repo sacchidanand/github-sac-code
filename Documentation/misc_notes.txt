@@ -90,4 +90,21 @@ Clone()
     mmap2(  NULL,   8MB,  MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK )
 ...........................................................................
 
+.........................................................................
+
+
+
+
+Memory mapped devices
+1. Entire device is mapped into RAM area.
+
+
+
+I/O mapped devices
+
+1. keyboard will have its own memory.
+2. Message queue 
+  e.g. Serial Port
+  IN/OUT
+3. Base address is mapped into RAM
 

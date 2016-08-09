@@ -1,3 +1,5 @@
+$ps -aeo ppid, pid, cmd
+
 FILE I/O
 
 1. Open a file using file pointer 

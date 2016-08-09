@@ -17,3 +17,35 @@ Scheduling algorithm? FIFO, SCHED_RR, CFS (RB Tree with virtual_run_time)
         realtime_rq - SCHED_RR, SCHED_FIFO
         deadline_rq - SCHED_DEADLINE
                            
+ Process which should be given low priority and should not be allowed to compete with other 
+ high priority processes, make them as SCHED_IDLE process.                          
+.............................................................................
+
+Process with low nice value, high priority
+will decide how often the virtual run time will get updated.
+
+..........................................................................................
+
+Execution context:
+
+1. HardIRQ : Top Half Handlers (10's micro second)
+
+  Register  
+    request_irq()
+
+  Un-Register
+    free_irq()
+.........................................................................................
+
+2. SoftIRQ (together should not spill over a jiffie)
+    Tasklet
+
+    irq_desc->irqaction
+
+.........................................................................................
+3. If we know its going to take more than a jiffie, go for a threaded IRQ.
+    request_threaded_irq()
+    
+.........................................................................................
+
+

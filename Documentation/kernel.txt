@@ -1,3 +1,5 @@
+Concurrency : running multiple task parallely
+
 
 WorkQueues
 
@@ -15,7 +17,7 @@ WorkQueues
         put_online_cpu(); // release lock
     */
 
-printf("function running on core = \n"smp_processor_id());
+printf("function running on core = \n",smp_processor_id());
 
 3.  
 
@@ -35,8 +37,12 @@ schedule_work()    ------> queue_work(system_wq,
 schedule_work_on()
 
 
+/* Delayed 5 sec */
+queue_deleyed_work( , , , 5*HZ)
+schedule_delayed_work
+
 *************************************************************************************************************************
-schedule()
+schedule() will get called in one of following case
 
 1. timer scheduler_tick() 
 
@@ -76,16 +82,25 @@ Execution context:
 .........................................................................................
 
 2. SoftIRQ (together should not spill over a jiffie)
-    Tasklet
 
+    Tasklet
+    NAPI
+    Block I/O
     irq_desc->irqaction
 
 .........................................................................................
-3. If we know its going to take more than a jiffie, go for a threaded IRQ.
+3. Process Context 
+
+  If we know its going to take more than a jiffie, go for a threaded IRQ.
     request_threaded_irq()
     
+    kthread
+    concurrency managed workqueues
+    User process, threads
 .........................................................................................
+4. Idle Context
 
+    Swapper / init task
 
 
 

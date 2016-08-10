@@ -1,0 +1,23 @@
+
+1. per cpu variables
+2. Memory barriers
+
+3. Atomic variables
+
+4. Spin Lock
+   Reader-Writer Lock
+   
+5. Sequential Lock
+6. RCU mechanism    
+......................................
+
+7. Semaphore
+8. Mutex
+
+9.WaitQueue
+10. Completion
+......................................
+
+11. Notifier Chain
+
+

@@ -1,0 +1,5 @@
+$ ./semaphore.exe
+thread 1
+thread 2
+buf=Hello there !
+

@@ -1,0 +1,5 @@
+$ ./semaphore.exe
+thread 2
+thread 1
+buf=
+

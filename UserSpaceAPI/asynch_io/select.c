@@ -1,3 +1,16 @@
+/*
+ * Select
+ 1. Select_Loop uses select system call to sleep until 
+    a. Condition occurs on file descriptor (when data is available for reading)
+    b. Timout occurs
+    c. Signal received (when child dies)
+
+ 2. Checking the return value of select find out which FD is changed and execute corresponding function. 
+ 3. Event_Loop
+     Often, for ease of use, the Select_Loop is implemented as an event loop, perhaps using callback functions; 
+     the situation lends itself particularly well to event-driven programming.
+ */   
+
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>

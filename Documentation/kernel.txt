@@ -1,3 +1,41 @@
+
+WorkQueues
+
+1. Run a function on any cpu 
+  work_on_cpu(1, my_function, NULL)
+
+2. Run function on all CPU
+  sched_on_each_cpu(my_function);  
+    /*
+        get_online_cpu(); // take lock
+            for_each_online_cpu(cpu)
+            {
+              work_on_cpu(cpu, func, arg);
+            }
+        put_online_cpu(); // release lock
+    */
+
+printf("function running on core = \n"smp_processor_id());
+
+3.  
+
+work_struct 
+workqueue_struct
+
+/* creates workQueue and wqManager */
+test_queue = alloc_workqueue("test_queue", WQ_RECLAIM | WQ_UNBOUND, 0);
+
+INIT_WORK((struct work_struct*)&work1, my_work_function);
+
+queue_work( test_queue, (struct work_struct *)&work1);
+queue_work_on(3, test_queue, (struct work_struct *)&work1);
+
+/*System work queue for task with less execution time */
+schedule_work()    ------> queue_work(system_wq,
+schedule_work_on()
+
+
+*************************************************************************************************************************
 schedule()
 
 1. timer scheduler_tick() 
@@ -47,5 +85,7 @@ Execution context:
     request_threaded_irq()
     
 .........................................................................................
+
+
 
 

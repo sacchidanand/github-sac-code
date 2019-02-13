@@ -1,3 +1,54 @@
+sachinbubuntu:~$ ipcalc
+Usage: ipcalc [options] <ADDRESS>[[/]<NETMASK>] [NETMASK]
+
+ipcalc takes an IP address and netmask and calculates the resulting
+broadcast, network, Cisco wildcard mask, and host range. By giving a
+second netmask, you can design sub- and supernetworks. It is also
+intended to be a teaching tool and presents the results as
+easy-to-understand binary values.
+
+ -n --nocolor  Don't display ANSI color codes.
+ -c --color    Display ANSI color codes (default).
+ -b --nobinary Suppress the bitwise output.
+ -c --class    Just print bit-count-mask of given address.
+ -h --html     Display results as HTML (not finished in this version).
+ -v --version  Print Version.
+ -s --split n1 n2 n3
+               Split into networks of size n1, n2, n3.
+ -r --range    Deaggregate address range.
+    --help     Longer help text.
+
+Examples:
+
+ipcalc 192.168.0.1/24
+ipcalc 192.168.0.1/255.255.128.0
+ipcalc 192.168.0.1 255.255.128.0 255.255.192.0
+ipcalc 192.168.0.1 0.0.63.255
+
+
+ipcalc <ADDRESS1> - <ADDRESS2>  deaggregate address range
+
+ipcalc <ADDRESS>/<NETMASK> --s a b c
+                                split network to subnets
+                                where a b c fits in.
+
+! New HTML support not yet finished.
+
+ipcalc 0.41
+dcp_admin@sachinbubuntu:~$ ipcalc 13.21.2.3/25
+Address:   13.21.2.3            00001101.00010101.00000010.0 0000011
+Netmask:   255.255.255.128 = 25 11111111.11111111.11111111.1 0000000
+Wildcard:  0.0.0.127            00000000.00000000.00000000.0 1111111
+=>
+Network:   13.21.2.0/25         00001101.00010101.00000010.0 0000000
+HostMin:   13.21.2.1            00001101.00010101.00000010.0 0000001
+HostMax:   13.21.2.126          00001101.00010101.00000010.0 1111110
+Broadcast: 13.21.2.127          00001101.00010101.00000010.0 1111111
+Hosts/Net: 126                   Class A
+
+..................................................................................................................
+
+
 Purposefully, Subnet mask is kept as 255.255.255.255 so that NID after AND will not match with any IP's NID.
 So all packet will go through default router.
 Security is provided via ACL.

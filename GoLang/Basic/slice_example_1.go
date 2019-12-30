@@ -2,6 +2,9 @@ package main
 
 import "fmt"
 
+// https://blog.golang.org/go-slices-usage-and-internals
+// https://blog.golang.org/slices
+
 func main() {
 	fmt.Println("Slice example-1")
 
@@ -15,6 +18,9 @@ func main() {
 	s = s[:]
 	printSlice(s, "changed to [:]")
 
+	s = s[1:]
+	printSlice(s, "changed to [1:]")
+
 	s = s[2:3]
 	printSlice(s, "changed to [2:3]")
 
@@ -23,14 +29,15 @@ func main() {
 
 	s = s[:cap(s)]
 	printSlice(s, "changed to [:cap(s)]")
-	fmt.Println(s[2])
+	fmt.Println("s[1]=", s[1])
 
 	//copy operation for newly created slice t that does not share same underlying array
 	var t []byte
 	t = make([]byte, len(s), (cap(s)+1)*2)
+	// copy(dest, source)
 	copyCounter := copy(t, s)
 	fmt.Println("copyCounter=", copyCounter)
-	printSlice(t, "copy operation for slice")
+	printSlice(t, "copy operation [cap(s)+1)*2 allocated cap] for slice s to t")
 
 	m := s[:]
 	printSlice(m, "shares same underlying array")
@@ -70,44 +77,51 @@ Len :  5
 Cap (Max len) :  5
 
 ##############################
+changed to [1:]
+Actual data in  slice [2 3 4 5]
+Len :  4
+Cap (Max len) :  4
+
+##############################
 changed to [2:3]
-Actual data in  slice [3]
+Actual data in  slice [4]
 Len :  1
-Cap (Max len) :  3
+Cap (Max len) :  2
 
 ##############################
 changed to [0:2]
-Actual data in  slice [3 4]
+Actual data in  slice [4 5]
 Len :  2
-Cap (Max len) :  3
+Cap (Max len) :  2
 
 ##############################
 changed to [:cap(s)]
-Actual data in  slice [3 4 5]
-Len :  3
-Cap (Max len) :  3
+Actual data in  slice [4 5]
+Len :  2
+Cap (Max len) :  2
 
 ##############################
-5
-copyCounter= 3
-copy operation for slice
-Actual data in  slice [3 4 5]
-Len :  3
-Cap (Max len) :  8
+s[1]= 5
+copyCounter= 2
+copy operation [cap(s)+1)*2 allocated cap] for slice s to t
+Actual data in  slice [4 5]
+Len :  2
+Cap (Max len) :  6
 
 ##############################
 shares same underlying array
-Actual data in  slice [3 4 5]
-Len :  3
-Cap (Max len) :  3
+Actual data in  slice [4 5]
+Len :  2
+Cap (Max len) :  2
 
 ##############################
 panic: runtime error: slice bounds out of range
 
 goroutine 1 [running]:
 main.main()
-        /Users/sacchidanand/Desktop/go_code_video/code/slice/code1/slice1.go:44 +0x36b
+        /Users/sacchidanand/workspace/github-sac-code/GoLang/Basic/slice_example_1.go:51 +0x3c6
 exit status 2
-'''
+
+
 
 */
